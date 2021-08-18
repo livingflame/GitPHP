@@ -12,72 +12,91 @@ abstract class GitPHP_ControllerBase
 
 	/**
 	 * Config handler instance
+	 *
 	 * @var GitPHP_Config
 	 */
 	protected $config;
 
 	/**
+	 * User list instance
+	 *
+	 * @var GitPHP_UserList
+	 */
+	protected $userList;
+
+	/**
 	 * Resource handler instance
+	 *
 	 * @var GitPHP_Resource
 	 */
 	protected $resource;
 
 	/**
 	 * Smarty instance
+	 *
 	 * @var Smarty
 	 */
 	protected $tpl;
 
 	/**
 	 * Project list
+	 *
 	 * @var GitPHP_ProjectListBase
 	 */
 	protected $projectList;
 
 	/**
 	 * Current project
+	 *
 	 * @var GitPHP_Project
 	 */
 	protected $project;
 
 	/**
 	 * Flag if this is a multi project controller
+	 *
 	 * @var boolean
 	 */
 	protected $multiProject;
 
 	/**
 	 * Parameters
+	 *
 	 * @var array
 	 */
 	protected $params = array();
 
 	/**
 	 * HTTP Headers
+	 *
 	 * @var string[]
 	 */
 	protected $headers = array();
 
 	/**
 	 * Flag to preserve whitespace in output (for non-html output)
+	 *
 	 * @var boolean
 	 */
 	protected $preserveWhitespace = false;
 
 	/**
 	 * Logger instance
+	 *
 	 * @var GitPHP_DebugLog
 	 */
 	protected $log;
 
 	/**
 	 * Git executable instance
+	 *
 	 * @var GitPHP_GitExe
 	 */
 	protected $exe;
 
 	/**
 	 * Url router instance
+	 *
 	 * @var GitPHP_Router
 	 */
 	protected $router;
@@ -91,30 +110,35 @@ abstract class GitPHP_ControllerBase
 
 		$this->InitializeResource();
 
+		$this->InitializeUserList();
+
 		$this->EnableLogging();
 
 		$this->InitializeGitExe();
 
 		$this->InitializeProjectList();
 
-		$this->CheckHtmlDependencies();
-
 		$this->InitializeSmarty();
 
-		if (isset($this->params['project']) && !empty($this->params['project'])) {
-			$project = GitPHP_ProjectList::GetInstance()->GetProject(str_replace(chr(0), '', $this->params['project']));
+		if ($this->multiProject) {
+			$this->projectList->LoadProjects();
+		}
+
+		if (!empty($this->params['project'])) {
+			$project = $this->projectList->GetProject($this->params['project']);
 			if (!$project) {
 				throw new GitPHP_InvalidProjectParameterException($this->params['project']);
+			}
+			if ($this->userList && ($this->userList->GetCount() > 0)) {
+				if (!$project->UserCanAccess((!empty($_SESSION['gitphpuser']) ? $_SESSION['gitphpuser'] : null))) {
+					throw new GitPHP_UnauthorizedProjectException($this->params['project']);
+				}
 			}
 			$this->project = $project->GetProject();
 		}
 
 		if (!($this->project || $this->multiProject)) {
 			throw new GitPHP_MissingProjectParameterException();
-		}
-
-		if ($this->multiProject) {
-			GitPHP_ProjectList::GetInstance()->LoadProjects();
 		}
 	}
 
@@ -135,8 +159,6 @@ abstract class GitPHP_ControllerBase
 		$locale = null;
 
 		$baseurl = GitPHP_Util::BaseUrl();
-		if (empty($baseurl) && $this->config->GetValue('cleanurl'))
-			$baseurl = '/';
 
 		if (!empty($this->params['lang'])) {
 			/*
@@ -154,6 +176,7 @@ abstract class GitPHP_ControllerBase
 			 * User's first time here, try by HTTP_ACCEPT_LANGUAGE
 			 */
 			if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+				$httpAcceptLang = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
 				$locale = GitPHP_Resource::FindPreferredLocale($_SERVER['HTTP_ACCEPT_LANGUAGE']);
 				if (!empty($locale)) {
 					setcookie(GitPHP_Resource::LocaleCookie, $locale, time()+GitPHP_Resource::LocaleCookieLifetime, $baseurl);
@@ -177,6 +200,19 @@ abstract class GitPHP_ControllerBase
 	}
 
 	/**
+	 * Initialize user list
+	 */
+	public function InitializeUserList()
+	{
+		$this->userList = new GitPHP_UserList();
+		$this->userList->LoadUsers(GITPHP_CONFIGDIR . 'users.conf.php');
+		if ($this->userList->GetCount() > 0) {
+			if (!isset($_SESSION))
+				session_start();
+		}
+	}
+
+	/**
 	 * Initialize executable
 	 *
 	 * @param boolean $validate whether the exe should be validated
@@ -191,19 +227,16 @@ abstract class GitPHP_ControllerBase
 		}
 	}
 
-
 	/**
 	 * Initialize project list
 	 */
 	protected function InitializeProjectList()
 	{
 		if (file_exists(GITPHP_CONFIGDIR . 'projects.conf.php')) {
-			GitPHP_ProjectList::Instantiate($this->config, GITPHP_CONFIGDIR . 'projects.conf.php', false);
+			$this->projectList = GitPHP_ProjectList::Instantiate($this->config, GITPHP_CONFIGDIR . 'projects.conf.php', false);
 		} else {
-			GitPHP_ProjectList::Instantiate($this->config, GITPHP_CONFIGDIR . 'gitphp.conf.php', true);
+			$this->projectList = GitPHP_ProjectList::Instantiate($this->config, GITPHP_CONFIGDIR . 'gitphp.conf.php', true);
 		}
-
-		$this->projectList = GitPHP_ProjectList::GetInstance();
 
 		$this->projectList->SetMemoryCache(new GitPHP_MemoryCache($this->config->GetValue('objectmemory')));
 		if ($this->config->GetValue('objectcache')) {
@@ -229,6 +262,7 @@ abstract class GitPHP_ControllerBase
 
 		if ($this->log)
 			$this->projectList->AddObserver($this->log);
+
 	}
 
 	/**
@@ -249,14 +283,12 @@ abstract class GitPHP_ControllerBase
 				if (!is_dir($cacheDir)) {
 					throw new Exception($cacheDir . ' exists but is not a directory');
 				} else if (!is_writable($cacheDir)) {
-					@ chmod($cacheDir, 0775);
-					if (!is_writable($cacheDir))
-						throw new Exception($cacheDir . ' is not writable');
+					throw new Exception($cacheDir . ' is not writable');
 				}
 			} else {
-				if (!mkdir($cacheDir, 0775))
+				if (!mkdir($cacheDir, 0777))
 					throw new Exception($cacheDir . ' could not be created');
-				@ chmod($cacheDir, 0775);
+				chmod($cacheDir, 0777);
 			}
 			$this->tpl->setCacheDir($cacheDir);
 
@@ -272,41 +304,7 @@ abstract class GitPHP_ControllerBase
 			}
 
 		}
-	}
 
-	/**
-	 * Check for outdated minimized js/css
-	 */
-	protected function CheckHtmlDependencies()
-	{
-		$tocheck = array();
-		$folders = array('js', 'css');
-
-		foreach ($folders as $dir) {
-			$files = GitPHP_Util::ListDir($dir);
-			foreach ($files as $f) {
-				if (strpos($f,'.min.') !== false)
-					$tocheck[] = $f;
-				elseif (strpos($f,'.gz') !== false)
-					$tocheck[] = $f;
-			}
-		}
-
-		foreach ($tocheck as $f) {
-			$srcfile = str_replace('.min.','.', $f);
-			$srcfile = preg_replace('/\.gz$/','', $srcfile);
-			if (!is_file($srcfile))
-				continue;
-			$dtmin = filemtime($f);
-			$dtmod = max(filemtime($srcfile), filectime($srcfile));
-			if ($dtmin < $dtmod) {
-				if (!is_writable($f) || !unlink($f)) {
-					$log = $this->GetLog();
-					if ($log)
-						$log->log("$f is outdated, please refresh it!");
-				}
-			}
-		}
 	}
 
 	/**
@@ -348,15 +346,12 @@ abstract class GitPHP_ControllerBase
 			return;
 
 		$debug = $this->config->GetValue('debug');
-
 		if ($debug) {
 			$this->log = new GitPHP_DebugLog($debug, $this->config->GetValue('benchmark'));
 			$this->log->SetStartTime(GITPHP_START_TIME);
 			$this->log->SetStartMemory(GITPHP_START_MEM);
-
 			if ($this->exe)
 				$this->exe->AddObserver($this->log);
-
 			if ($this->projectList)
 				$this->projectList->AddObserver($this->log);
 		}
@@ -372,7 +367,6 @@ abstract class GitPHP_ControllerBase
 
 		if ($this->projectList)
 			$this->projectList->RemoveObserver($this->log);
-
 		if ($this->exe)
 			$this->exe->RemoveObserver($this->log);
 
@@ -388,10 +382,8 @@ abstract class GitPHP_ControllerBase
 	 */
 	public function GetProject()
 	{
-		if ($this->projectList && $this->project)
+		if ($this->project)
 			return $this->projectList->GetProject($this->project);
-		elseif ($this->project)
-			return GitPHP_ProjectList::GetInstance()->GetProject($this->project);
 		return null;
 	}
 
@@ -412,7 +404,7 @@ abstract class GitPHP_ControllerBase
 	/**
 	 * Get the prefix for all cache keys
 	 *
-	 * @param string $projectKeys include project-specific key pieces
+	 * @param boolean $projectKeys include project-specific key pieces
 	 * @return string cache key prefix
 	 */
 	private function GetCacheKeyPrefix($projectKeys = true)
@@ -422,14 +414,8 @@ abstract class GitPHP_ControllerBase
 		else
 			$cacheKeyPrefix = 'en_US';
 
-		if ($this->projectList)
-			$projList = $this->projectList;
-		else
-			$projList = GitPHP_ProjectList::GetInstance();
-
-		if ($projList) {
-			$cacheKeyPrefix .= '|' . sha1(serialize($projList->GetProjectListConfig())) . '|' . sha1(serialize($projList->GetProjectSettings()));
-			unset($projList);
+		if ($this->projectList) {
+			$cacheKeyPrefix .= '|' . sha1(serialize($this->projectList->GetProjectListConfig())) . '|' . sha1(serialize($this->projectList->GetProjectSettings()));
 		}
 		if ($this->project && $projectKeys) {
 			$cacheKeyPrefix .= '|' . sha1($this->project);
@@ -509,19 +495,28 @@ abstract class GitPHP_ControllerBase
 
 		$this->tpl->assign('version', $gitphp_version);
 
-		$stylesheet = $this->config->GetValue('stylesheet', 'gitphpskin.css');
+		$stylesheet = $this->config->GetValue('stylesheet');
 		if ($stylesheet == 'gitphp.css') {
 			// backwards compatibility
 			$stylesheet = 'gitphpskin.css';
 		}
 		$this->tpl->assign('stylesheet', preg_replace('/\.css$/', '', $stylesheet));
 
-		$homelink = $this->resource ? $this->resource->translate('projects') : 'projects';
-
-		$this->tpl->assign('javascript', $this->config->GetValue('javascript', true));
-		$this->tpl->assign('googlejs', $this->config->GetValue('googlejs', false));
-		$this->tpl->assign('pagetitle', $this->config->GetValue('title', $gitphp_appstring));
-		$this->tpl->assign('homelink', $this->config->GetValue('homelink', $homelink));
+		$this->tpl->assign('javascript', $this->config->GetValue('javascript'));
+		$this->tpl->assign('googlejs', $this->config->GetValue('googlejs'));
+		if ($this->config->HasKey('title')) {
+			$this->tpl->assign('pagetitle', $this->config->GetValue('title'));
+		} else {
+			$this->tpl->assign('pagetitle', $gitphp_appstring);
+		}
+		if ($this->config->HasKey('homelink')) {
+			$this->tpl->assign('homelink', $this->config->GetValue('homelink'));
+		} else {
+			if ($this->resource)
+				$this->tpl->assign('homelink', $this->resource->translate('projects'));
+			else
+				$this->tpl->assign('homelink', 'projects');
+		}
 		$this->tpl->assign('action', $this->GetName());
 		$this->tpl->assign('actionlocal', $this->GetName(true));
 		if ($this->project)
@@ -534,7 +529,6 @@ abstract class GitPHP_ControllerBase
 			$this->tpl->assign('search', $this->params['search']);
 		if (isset($this->params['searchtype']))
 			$this->tpl->assign('searchtype', $this->params['searchtype']);
-
 		if ($this->resource) {
 			$this->tpl->assign('currentlocale', $this->resource->GetLocale());
 			$this->tpl->assign('currentprimarylocale', $this->resource->GetPrimaryLocale());
@@ -554,7 +548,7 @@ abstract class GitPHP_ControllerBase
 		if ($querypos !== false)
 			$requesturl = substr($requesturl, 0, $querypos);
 		$this->tpl->assign('requesturl', $requesturl);
-
+		
 		if ($this->router) {
 			$this->router->SetCleanUrl($this->config->GetValue('cleanurl') ? true : false);
 			$this->router->SetAbbreviate($this->config->GetValue('abbreviateurl') ? true : false);
@@ -564,11 +558,7 @@ abstract class GitPHP_ControllerBase
 			$this->tpl->assign('router', $this->router);
 		}
 
-		$getvars = array();
-		if (isset($_SERVER['QUERY_STRING'])) {
-			$getvars = explode('&', $_SERVER['QUERY_STRING']);
-		}
-
+		$getvars = explode('&', $_SERVER['QUERY_STRING']);
 		$getvarsmapped = array();
 		foreach ($getvars as $varstr) {
 			$eqpos = strpos($varstr, '=');
@@ -583,6 +573,16 @@ abstract class GitPHP_ControllerBase
 		$this->tpl->assign('requestvars', $getvarsmapped);
 
 		$this->tpl->assign('snapshotformats', GitPHP_Archive::SupportedFormats());
+
+		if ($this->userList && ($this->userList->GetCount() > 0)) {
+			$this->tpl->assign('loginenabled', true);
+			if (!empty($_SESSION['gitphpuser'])) {
+				$user = $this->userList->GetUser($_SESSION['gitphpuser']);
+				if ($user) {
+					$this->tpl->assign('loggedinuser', $user->GetUsername());
+				}
+			}
+		}
 	}
 
 	/**
@@ -618,7 +618,6 @@ abstract class GitPHP_ControllerBase
 
 		if (!$this->tpl->isCached($this->GetTemplate(), $this->GetFullCacheKey())) {
 			$this->tpl->clearAllAssign();
-
 			if ($this->log && $this->log->GetBenchmark())
 				$this->log->Log("Data load begin");
 			$this->LoadCommonData();

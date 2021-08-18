@@ -23,7 +23,7 @@ class GitPHP_MessageException extends Exception
 	 * @var integer
 	 */
 	public $StatusCode;
-
+	
 	/**
 	 * Constructor
 	 *

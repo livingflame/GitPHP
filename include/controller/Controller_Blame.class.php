@@ -79,9 +79,8 @@ class GitPHP_Controller_Blame extends GitPHP_ControllerBase
 		}
 		
 		$blob = $this->GetProject()->GetObjectManager()->GetBlob($this->params['hash']);
-		if (isset($this->params['file']))
+		if ($this->params['file'])
 			$blob->SetPath($this->params['file']);
-
 		$blob->SetCommit($commit);
 		$this->tpl->assign('blob', $blob);
 
@@ -95,18 +94,8 @@ class GitPHP_Controller_Blame extends GitPHP_ControllerBase
 
 		$this->tpl->assign('tree', $commit->GetTree());
 
-		// Pictures (one blame possible)
-		$mimetype = GitPHP_Mime::FileMime($this->params['file'], true);
-		$isPicture = ($mimetype == 'image');
-		if ($isPicture) {
-			$this->tpl->assign('file', $this->params['file']);
-			$this->tpl->assign('picture', $isPicture);
-			return;
-		}
-
 		if ($this->config->GetValue('geshi')) {
 			include_once(GITPHP_GESHIDIR . "geshi.php");
-			//include_once(GitPHP_Util::AddSlash($this->config->GetValue('geshiroot', GITPHP_GESHIDIR)) . "geshi.php");
 			if (class_exists('GeSHi')) {
 				$geshi = new GeSHi("",'php');
 				if ($geshi) {
@@ -134,7 +123,6 @@ class GitPHP_Controller_Blame extends GitPHP_ControllerBase
 							$this->tpl->assign('geshihead', $geshihead);
 							$this->tpl->assign('geshibody', $geshibody);
 							$this->tpl->assign('geshifoot', $geshifoot);
-							$this->tpl->assign('fixupjs', $this->config->GetValue('fixupjs', ''));
 							$this->tpl->assign('geshicss', $geshi->get_stylesheet());
 							$this->tpl->assign('geshi', true);
 						}

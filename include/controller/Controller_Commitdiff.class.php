@@ -9,7 +9,19 @@
  */
 class GitPHP_Controller_Commitdiff extends GitPHP_Controller_DiffBase
 {
+	/**
+	 * Initialize controller
+	 */
+	public function Initialize()
+	{
+		parent::Initialize();
 
+		if (empty($this->params['hash']))
+			$this->params['hash'] = 'HEAD';
+
+		if (!empty($this->params['output']) && ($this->params['output'] == 'jstip'))
+			$this->DisableLogging();
+	}
 	/**
 	 * Gets the template for this controller
 	 *
@@ -32,7 +44,7 @@ class GitPHP_Controller_Commitdiff extends GitPHP_Controller_DiffBase
 	{
 		$key = (isset($this->params['hash']) ? $this->params['hash'] : '')
 		. '|' . (isset($this->params['hashparent']) ? $this->params['hashparent'] : '')
-		. '|' . (isset($this->params['output']) && ($this->params['output'] == 'sidebyside') ? '1' : '');
+		. '|' . (isset($this->params['sidebyside']) && ($this->params['sidebyside'] === true) ? '1' : '');
 
 		return $key;
 	}
@@ -76,31 +88,11 @@ class GitPHP_Controller_Commitdiff extends GitPHP_Controller_DiffBase
 			$this->tpl->assign("hashparent", $this->params['hashparent']);
 		}
 
-		if (isset($this->params['file'])) {
-			/* folder filter */
-			$this->tpl->assign('file', $this->params['file']);
-		}
-
-		if (isset($this->params['output']) && ($this->params['output'] == 'sidebyside')) {
+		if (isset($this->params['sidebyside']) && ($this->params['sidebyside'] === true)) {
 			$this->tpl->assign('sidebyside', true);
 		}
 
-
-		$whiteSpaces = true;
-		if (isset($this->params['spaces'])) {
-			$whiteSpaces = intval($this->params['spaces']);
-		}
-		$this->tpl->assign('whitespaces', $whiteSpaces);
-
-		$treediff = new GitPHP_TreeDiff(
-			$this->GetProject(),
-			$this->exe,
-			$this->params['hash'],
-			(isset($this->params['hashparent']) ? $this->params['hashparent'] : ''),
-			(isset($this->params['file']) ? $this->params['file'] : ''),
-			false, /* renames */
-			$whiteSpaces
-		);
+		$treediff = new GitPHP_TreeDiff($this->GetProject(), $this->exe, $this->params['hash'], (isset($this->params['hashparent']) ? $this->params['hashparent'] : ''));
 		$this->tpl->assign('treediff', $treediff);
 	}
 

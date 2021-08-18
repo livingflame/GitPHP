@@ -16,44 +16,11 @@ class GitPHP_Config
 	protected $values = array();
 
 	/**
-	 * Stores the singleton instance
-	 * @deprecated
-	 */
-	protected static $instance;
-
-	/**
-	 * Returns the singleton instance
-	 * @deprecated
-	 */
-	public static function GetInstance()
-	{
-		if (!self::$instance) {
-			// still required for router config
-			$config = new GitPHP_Config();
-			$config->LoadConfig(GITPHP_CONFIGDIR . 'gitphp.conf.php');
-			self::$instance = $config;
-		}
-		return self::$instance;
-	}
-
-	/**
-	 * Releases the singleton instance
-	 * deprecated
-	 */
-	public static function DestroyInstance()
-	{
-		self::$instance = null;
-	}
-
-	/**
 	 * Class constructor
 	 */
 	public function __construct()
 	{
 		$this->InitializeDefaults();
-		if (!self::$instance) {
-			self::$instance = $this;
-		}
 	}
 
 	/**
@@ -93,15 +60,15 @@ class GitPHP_Config
 	 * Gets a config value
 	 *
 	 * @param string $key config key to fetch
-	 * @param mixed $default default config value to return
 	 * @return mixed config value
 	 */
-	public function GetValue($key, $default = null)
+	public function GetValue($key)
 	{
 		if ($this->HasKey($key)) {
 			return $this->values[$key];
 		}
-		return $default;
+
+		return null;
 	}
 
 	/**
@@ -161,7 +128,7 @@ class GitPHP_Config
 		$this->values['locale'] = 'en_US';
 		$this->values['graphs'] = false;
 		$this->values['objectcachecompress'] = 500;
-
+        
 		// gitphp-repo additions
 		$this->values['bareonly'] = false;
 		$this->values['reposupport'] = true;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Controller to display a commit
+ * Controller for displaying a commit
  *
  * @author Christopher Han <xiphux@gmail.com>
  * @copyright Copyright (c) 2010 Christopher Han
@@ -31,7 +31,7 @@ class GitPHP_Controller_Commit extends GitPHP_ControllerBase
 	 */
 	protected function GetTemplate()
 	{
-		if (isset($this->params['output']) && $this->params['output'] == 'jstip') {
+		if (isset($this->params['output']) && ($this->params['output'] == 'jstip')) {
 			return 'committip.tpl';
 		}
 		return 'commit.tpl';
@@ -67,9 +67,6 @@ class GitPHP_Controller_Commit extends GitPHP_ControllerBase
 	protected function LoadData()
 	{
 		$commit = $this->GetProject()->GetCommit($this->params['hash']);
-		if (!is_object($commit))
-			throw new GitPHP_InvalidHashException($this->params['hash']);
-
 		$this->tpl->assign('commit', $commit);
 		$this->tpl->assign('tree', $commit->GetTree());
 		$treediff = $commit->DiffToParent($this->exe);

@@ -1,5 +1,5 @@
 <?php
-/**
+/** 
  * Custom exception when a project list file cannot be read
  *
  * @author Christopher Han <xiphux@gmail.com>

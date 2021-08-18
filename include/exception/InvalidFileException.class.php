@@ -1,5 +1,5 @@
 <?php
-/**
+/** 
  * Custom exception when an invalid file is specified
  *
  * @author Christopher Han <xiphux@gmail.com>

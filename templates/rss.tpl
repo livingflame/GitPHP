@@ -1,9 +1,9 @@
 {*
  *  rss.tpl
- *  GitPHP: A PHP git repository browser
+ *  gitphp: A PHP git repository browser
  *  Component: RSS template
  *
- *  Copyright (C) 2012 Christopher Han <xiphux@gmail.com>
+ *  Copyright (C) 2009 Christopher Han <xiphux@gmail.com>
  *}
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -14,23 +14,26 @@
     <description>{$project->GetProject()} log</description>
     <language>en</language>
 
-{**}{foreach from=$log item=logitem}
+    {foreach from=$log item=logitem}
       <item>
-        <title>{$logitem->GetCommitterEpoch()|date_format:"%d %b %Y, %R"} - {$logitem->GetTitle()|escape:'html'}</title>
+        <title>{$logitem->GetCommitterEpoch()|date_format:"%d %b %R"} - {$logitem->GetTitle()|escape:'html'}</title>
         <author>{$logitem->GetAuthorEmail()|escape:'html'} ({$logitem->GetAuthorName()|escape:'html'})</author>
-        <pubDate>{$logitem->GetCommitterEpoch()|date_format:"%a, %d %b %Y %H:%M:%S"} {date('O')}</pubDate>
+        <pubDate>{$logitem->GetCommitterEpoch()|date_format:"%a, %d %b %Y %H:%M:%S %z"}</pubDate>
         <guid isPermaLink="true">{geturl fullurl=true project=$project action=commit hash=$logitem}</guid>
         <link>{geturl fullurl=true project=$project action=commit hash=$logitem}</link>
-        <description>{foreach from=$logitem->GetComment() item=line}{$line|escape:'html'}&lt;br/&gt;{/foreach}</description>
+        <description>{$logitem->GetTitle()|escape:'html'}</description>
         <content:encoded>
           <![CDATA[
+          {foreach from=$logitem->GetComment() item=line}
+            {$line}<br />
+          {/foreach}
           {foreach from=$logitem->DiffToParent($gitexe) item=diffline}
-            {$diffline->GetToFile()}<br/>
+            {$diffline->GetToFile()}<br />
           {/foreach}
           ]]>
         </content:encoded>
       </item>
-{**}{/foreach}
+    {/foreach}
 
   </channel>
 </rss>

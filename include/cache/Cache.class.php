@@ -10,30 +10,6 @@
 class GitPHP_Cache
 {
 	/**
-	 * Stores the singleton instance of the object cache
-	 * @deprecated
-	 */
-	protected static $objectCacheInstance;
-
-	/**
-	 * Return the singleton instance of the object cache
-	 * @deprecated
-	 *
-	 * @return mixed instance of cache class
-	 */
-	public static function GetObjectCacheInstance()
-	{
-		if (!self::$objectCacheInstance) {
-			$strategy = new GitPHP_Cache_File(GITPHP_CACHEDIR. 'objects', GitPHP_Config::GetInstance()->GetValue('objectcachecompress'));
-			self::$objectCacheInstance = new GitPHP_Cache($strategy);
-			if (GitPHP_Config::GetInstance()->GetValue('objectcache', false)) {
-				self::$objectCacheInstance->SetLifetime(GitPHP_Config::GetInstance()->GetValue('objectcachelifetime'));
-			}
-		}
-		return self::$objectCacheInstance;
-	}
-
-	/**
 	 * Cache strategy
 	 *
 	 * @var GitPHP_CacheStrategy_Interface
@@ -45,7 +21,7 @@ class GitPHP_Cache
 	 *
 	 * @var int
 	 */
-	protected $lifetime = 86400; // 24*60*60
+	protected $lifetime = 86400;
 
 	/**
 	 * Constructor
@@ -58,10 +34,6 @@ class GitPHP_Cache
 			throw new Exception('Cache strategy is required');
 
 		$this->SetStrategy($strategy);
-
-		if (!self::$objectCacheInstance) {
-			self::$objectCacheInstance = $this;
-		}
 	}
 
 	/**
@@ -104,9 +76,9 @@ class GitPHP_Cache
 	 * Get an item from the cache
 	 *
 	 * @param string $key cache key
-	 * @return the cached object, or false
+	 * @return mixed the cached object, or false
 	 */
-	public function Get($key = null)
+	public function Get($key)
 	{
 		if (empty($key))
 			return false;
@@ -121,7 +93,7 @@ class GitPHP_Cache
 	 * @param mixed $value value
 	 * @param int $lifetime override the lifetime for this data
 	 */
-	public function Set($key = null, $value = null, $lifetime = null)
+	public function Set($key, $value, $lifetime = null)
 	{
 		if (empty($key) || empty($value))
 			return;
@@ -138,7 +110,7 @@ class GitPHP_Cache
 	 * @param string $key cache key
 	 * @return boolean true if cached, false otherwise
 	 */
-	public function Exists($key = null)
+	public function Exists($key)
 	{
 		if (empty($key))
 			return false;
@@ -151,7 +123,7 @@ class GitPHP_Cache
 	 *
 	 * @param string $key cache key
 	 */
-	public function Delete($key = null)
+	public function Delete($key)
 	{
 		if (empty($key))
 			return;

@@ -1,5 +1,5 @@
 <?php
-/**
+/** 
  * Custom exception when a user attempts directory traversal
  *
  * @author Christopher Han <xiphux@gmail.com>

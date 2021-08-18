@@ -17,11 +17,13 @@ class GitPHP_Controller_Tree extends GitPHP_ControllerBase
 	{	
 		parent::Initialize();
 
-		if (!(isset($this->params['hashbase']) || isset($this->params['hash'])))
+		if (!isset($this->params['hashbase'])) {
 			$this->params['hashbase'] = 'HEAD';
+		}
 
-		if (isset($this->params['output']) && ($this->params['output'] == 'js'))
+		if (isset($this->params['output']) && ($this->params['output'] == 'js')) {
 			$this->DisableLogging();
+		}
 	}
 
 	/**
@@ -72,20 +74,6 @@ class GitPHP_Controller_Tree extends GitPHP_ControllerBase
 		}
 
 		$commit = $this->GetProject()->GetCommit($this->params['hashbase']);
-
-		// Projects with Remote Heads only
-		if (empty($commit) && $this->GetProject()->isAndroidRepo) {
-			$remotes = $this->GetProject()->GetRemotes(1);
-			if (!empty($remotes)) {
-				$rm = reset($remotes);
-				$hash = $rm->GetHash();
-				$this->params['hash'] = $hash;
-				$commit = $this->GetProject()->GetCommit($hash);
-				//$this->params['hashbase'] = $commit->GetTree()->GetHash();
-				$this->params['hashbase'] = $commit->GetTreeHash();
-				unset($remotes);
-			}
-		}
 
 		$this->tpl->assign('commit', $commit);
 

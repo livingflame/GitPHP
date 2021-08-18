@@ -10,53 +10,73 @@
 abstract class GitPHP_FilesystemObject extends GitPHP_GitObject
 {
 	/**
-	 * File type constants
+	 * Unknown type
+	 *
+	 * @var int
 	 */
 	const UnknownType = 0;
+
+	/**
+	 * Directory type
+	 *
+	 * @var int
+	 */
 	const DirectoryType = 1;
+
+	/**
+	 * Symlink type
+	 *
+	 * @var int
+	 */
 	const SymlinkType = 2;
+
+	/**
+	 * File type
+	 *
+	 * @var int
+	 */
 	const FileType = 3;
 
 	/**
-	 * Standard style constants
-	 */
-	const TYPE_UNKNOWN = 0;
-	const TYPE_FOLDER = 1;
-	const TYPE_LINK = 2;
-	const TYPE_FILE = 3;
-
-	/**
-	 * Object path
+	 * The object path
+	 *
+	 * @var string
 	 */
 	protected $path = '';
 
 	/**
-	 * Object mode
+	 * The object mode
+	 *
+	 * @var string
 	 */
 	protected $mode;
 
 	/**
-	 * Hash of the commit this object belongs to
+	 * The hash of the commit this object belongs to
+	 *
+	 * @var string
 	 */
 	protected $commitHash;
 
 	/**
 	 * The trees of this object's base path
+	 *
 	 * @var array
 	 */
-	protected $pathTree;
+	protected $pathTree = array();
 
 	/**
 	 * Whether the trees of the object's base path have been read
+	 *
+	 * @var boolean
 	 */
 	protected $pathTreeRead = false;
 
 	/**
 	 * Instantiates object
 	 *
-	 * @param mixed $project the project
+	 * @param GitPHP_Project $project the project
 	 * @param string $hash object hash
-	 * @throws Exception exception on invalid hash
 	 */
 	public function __construct($project, $hash)
 	{
@@ -152,7 +172,7 @@ abstract class GitPHP_FilesystemObject extends GitPHP_GitObject
 	/**
 	 * Gets the commit this object belongs to
 	 *
-	 * @return mixed commit object
+	 * @return GitPHP_Commit commit object
 	 */
 	public function GetCommit()
 	{
@@ -162,7 +182,7 @@ abstract class GitPHP_FilesystemObject extends GitPHP_GitObject
 	/**
 	 * Sets the commit this object belongs to
 	 *
-	 * @param mixed $commit commit object
+	 * @param GitPHP_Commit $commit commit object
 	 */
 	public function SetCommit($commit)
 	{
@@ -203,7 +223,7 @@ abstract class GitPHP_FilesystemObject extends GitPHP_GitObject
 			if (isset($data['hash']) && !empty($data['hash'])) {
 				$tree = $this->GetProject()->GetObjectManager()->GetTree($data['hash']);
 				if (isset($usedTrees[$data['hash']])) {
-					$tree = clone $tree;
+					$tree = clone $obj;
 				} else {
 					$usedTrees[$data['hash']] = 1;
 				}
@@ -258,14 +278,14 @@ abstract class GitPHP_FilesystemObject extends GitPHP_GitObject
 		$mode = octdec($octMode);
 
 		if (($mode & 0x4000) == 0x4000) {
-			return self::TYPE_FOLDER;
+			return GitPHP_FilesystemObject::DirectoryType;
 		} else if (($mode & 0xA000) == 0xA000) {
-			return self::TYPE_LINK;
+			return GitPHP_FilesystemObject::SymlinkType;
 		} else if (($mode & 0x8000) == 0x8000) {
-			return self::TYPE_FILE;
+			return GitPHP_FilesystemObject::FileType;
 		}
 
-		return self::TYPE_UNKNOWN;
+		return GitPHP_FilesystemObject::UnknownType;
 	}
 
 	/**

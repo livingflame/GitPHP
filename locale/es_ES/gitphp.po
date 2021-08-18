@@ -501,8 +501,8 @@ msgstr "Tipo de búsqueda inválido"
 # %1$s: the user's search string
 #: include/controller/Controller_Search.class.php:168
 #, php-format
-msgid "No matches for \"%1$s\""
-msgstr "No se han encontrado coincidencias para \"%1$s\""
+msgid "No matches for \"%1\""
+msgstr "No se han encontrado coincidencias para \"%1\""
 
 # A type of filesystem object stored in a project
 #: include/git/Blob.class.php:166
@@ -763,8 +763,8 @@ msgstr "(mostrar todos)"
 # %2$s: the filename of the second file
 #: include/git/FileDiff.class.php:810
 #, php-format
-msgid "Binary files %1$s and %2$s differ"
-msgstr "Los archivos binarios %1$s y %2$s difieren"
+msgid "Binary files %1 and %2 differ"
+msgstr "Los archivos binarios %1 y %2 difieren"
 
 # Used to label the url of the website of the project
 #: templates/project.tpl

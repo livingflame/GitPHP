@@ -4,11 +4,6 @@ require_once(GITPHP_BASEDIR . 'lib/php-gettext/streams.php');
 require_once(GITPHP_BASEDIR . 'lib/php-gettext/gettext.php');
 
 /**
- * Locale cookie lifetime
- */
-defined('GITPHP_LOCALE_COOKIE_LIFETIME') || define('GITPHP_LOCALE_COOKIE_LIFETIME', 60*60*24*365); // 1 year
-
-/**
  * Resource string manager class
  *
  * @author Christopher Han <xiphux@gmail.com>
@@ -30,8 +25,8 @@ class GitPHP_Resource
 	 *
 	 * @var int
 	 */
-	const LocaleCookieLifetime = GITPHP_LOCALE_COOKIE_LIFETIME;	// 1 year
-
+	const LocaleCookieLifetime = 31536000;	// 1 year
+	
 	/**
 	 * Stores the currently instantiated locale identifier
 	 *
@@ -45,11 +40,6 @@ class GitPHP_Resource
 	 * @var gettext_reader
 	 */
 	protected $localeReader;
-
-	/**
-	 * hold the instance, for compat.
-	 */
-	private static $instance;
 
 	/**
 	 * Constructor
@@ -145,25 +135,6 @@ class GitPHP_Resource
 		}
 
 		return $localeName;
-	}
-
-	/**
-	 * Deprecated static functions
-	 */
-	public static function Instantiated()
-	{
-		return is_object(self::$instance);
-	}
-
-	public static function Instantiate($locale)
-	{
-		self::$instance = new GitPHP_Resource($locale);
-		return self::$instance;
-	}
-
-	public static function GetInstance()
-	{
-		return self::$instance;
 	}
 
 	/**

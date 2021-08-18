@@ -1,6 +1,6 @@
 <?php
 /**
- * Controller to display file history
+ * Controller for displaying file history
  *
  * @author Christopher Han <xiphux@gmail.com>
  * @copyright Copyright (c) 2010 Christopher Han
@@ -9,6 +9,7 @@
  */
 class GitPHP_Controller_History extends GitPHP_ControllerBase
 {
+
 	/**
 	 * Initialize controller
 	 */
@@ -40,7 +41,7 @@ class GitPHP_Controller_History extends GitPHP_ControllerBase
 	 */
 	protected function GetCacheKey()
 	{
-		return (isset($this->params['hash']) ? $this->params['hash'] : '') . '|' . (isset($this->params['file']) ? sha1($this->params['file']) : ''). '|' . $this->params['page'];
+		return (isset($this->params['hash']) ? $this->params['hash'] : '') . '|' . (isset($this->params['file']) ? sha1($this->params['file']) : '') . '|' . $this->params['page'];
 	}
 
 	/**
@@ -64,17 +65,19 @@ class GitPHP_Controller_History extends GitPHP_ControllerBase
 	{
 		$co = $this->GetProject()->GetCommit($this->params['hash']);
 		$this->tpl->assign('commit', $co);
-
 		$tree = $co->GetTree();
-		$this->tpl->assign('tree', $tree);
+		$this->tpl->assign('tree', $co->GetTree());
+		$this->tpl->assign('f', $this->params['file']);
 
 		$blobhash = $tree->PathToHash($this->params['file']);
 		if (empty($blobhash))
 			throw new GitPHP_FileNotFoundException($this->params['file']);
-
+        
 		$type = 0; /* retrieve type (folder or file) */
-		$this->GetProject()->GetObjectLoader()->GetObject($blobhash, $type);
+		$this->GetProject()->GetObjectManager()->GetObjectLoader()->GetObject($blobhash, $type);
+        
 		if ($type == GitPHP_Pack::OBJ_TREE) {
+
 			$folder = $this->GetProject()->GetObjectManager()->GetTree($blobhash);
 
 			$folder->SetCommit($co);

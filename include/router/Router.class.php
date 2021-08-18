@@ -150,14 +150,14 @@ class GitPHP_Router
 		// project-specific action with hash and output method
 		$this->routes[] = new GitPHP_Route(':action/:hash/:output', array(
 			'action' => 'blobs',
-			'hash' => '[0-9A-Fa-f]{7,40}|HEAD',
+			'hash' => '[0-9A-Fa-f]{4,40}|HEAD',
 			'output' => 'plain'
 		), array(), $projectroute);
 
 		// project-specific action with hash
 		$this->routes[] = new GitPHP_Route(':action/:hash', array(
 			'action' => 'commits|trees|blobs|search|snapshot|commitdiff|blobdiff|blame',
-			'hash' => '[0-9A-Fa-f]{7,40}|HEAD'
+			'hash' => '[0-9A-Fa-f]{4,40}|HEAD'
 		), array(), $projectroute);
 
 		// project-specific action with hash or ref
@@ -168,7 +168,7 @@ class GitPHP_Router
 
 		// map heads to shortlog
 		$this->routes[] = new GitPHP_Route(':action/:hash', array(
-			'action' => 'heads|remotes',
+			'action' => 'heads',
 			'hash' => '[^\?]+'
 		), array(
 			'action' => 'shortlog'
@@ -177,7 +177,7 @@ class GitPHP_Router
 		// project-specific graphs
 		$this->routes[] = new GitPHP_Route(':action/:graphtype', array(
 			'action' => 'graphs',
-			'graphtype' => '[a-z]+',
+			'graphtype' => '[a-z]+'
 		), array(), $projectroute);
 
 		// project-specific tag
@@ -192,7 +192,7 @@ class GitPHP_Router
 			// project specific snapshot format with hash
 			$this->routes[] = new GitPHP_Route(':format/:hash', array(
 				'format' => $formatconstraint,
-				'hash' => '[0-9A-Fa-f]{7,40}|HEAD'
+				'hash' => '[0-9A-Fa-f]{4,40}|HEAD'
 			), array(
 				'action' => 'snapshot'
 			), $projectroute);
@@ -207,7 +207,7 @@ class GitPHP_Router
 
 		// project-specific action only
 		$this->routes[] = new GitPHP_Route(':action', array(
-			'action' => 'tags|heads|remotes|shortlog|log|search|atom|rss|snapshot|commits|graphs|trees|blobs|history|commitdiff|blobdiff'
+			'action' => 'tags|heads|shortlog|log|search|atom|rss|snapshot|commits|graphs|trees|blobs|history|commitdiff|blobdiff'
 		), array(), $projectroute);
 
 		$this->routes[] = $projectroute;
@@ -244,8 +244,7 @@ class GitPHP_Router
 			'prefix' => 'prefix',
 			'sort' => 'sort',
 			'lang' => 'l',
-			'redirect' => 'redirect',
-			'spaces' => 'spaces',
+			'redirect' => 'redirect'
 		);
 	}
 
@@ -294,7 +293,7 @@ class GitPHP_Router
 
 		foreach ($queryvars as $var => $val) {
 
-			if (empty($val) && $val !== '0')
+			if (empty($val))
 				continue;
 
 			$param = array_search($var, $this->queryParameters);
@@ -374,61 +373,6 @@ class GitPHP_Router
 		if (!empty($params['action']))
 			$action = $params['action'];
 
-		/* Reduce web crawlers rights */
-		$restrict = GitPHP_Config::GetInstance()->GetValue('robots_restrict');
-
-		$agent = isset($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : '';
-
-		if ($restrict && preg_match("/(Googlebot|bingbot|robot|spider|crawler)/i", $agent, $regs)) {
-			switch ($action) {
-
-				// allowed actions ...
-				case null:
-				case 'atom':
-				case 'opml':
-				case 'rss':
-				case 'summary':
-				case 'heads':
-				case 'tags':
-				case 'log':
-				case 'shortlog':
-				case 'projectindex':
-					break;
-
-				// restricted
-				case 'commit':
-				case 'commits':
-				case 'commitdiff':
-					// allow commits, but only as text patch output
-					$redirect = !isset($params['output']) || $params['output'] != 'plain';
-					$redirect = $redirect || $action != 'commitdiff';
-					if ($redirect) {
-						$params['output'] = 'plain';
-						$params['action'] = 'commitdiff';
-						header('Location: '.$this->GetUrl($params));
-						return null;
-					}
-					break;
-				case 'blob':
-				case 'blobs':
-					// only plain blobs and HEAD version
-					if (!isset($params['output']) || $params['output'] != 'plain') {
-						$params['output'] = 'plain';
-						$params['action'] = 'blob';
-						unset($params['hash']); // redirect to HEAD
-						header('Location: '.$this->GetUrl($params));
-						return null;
-					}
-					break;
-
-				// forbidden
-				case 'snapshot':
-				default:
-					// disallow bot exploration, diff and blobs
-					throw new GitPHP_MessageException('Access restricted for '.$action, true, 403);
-			}
-		}
-
 		switch ($action) {
 
 
@@ -491,9 +435,6 @@ class GitPHP_Router
 				$controller = new GitPHP_Controller_Heads();
 				break;
 
-			case 'remotes':
-				$controller = new GitPHP_Controller_Remotes();
-				break;
 
 			case 'blame':
 				$controller = new GitPHP_Controller_Blame();
@@ -542,15 +483,31 @@ class GitPHP_Router
 				$controller->SetParam('opml', true);
 				break;
 
+			
+			case 'login':
+				$controller = new GitPHP_Controller_Login();
+				if (!empty($_POST['username']))
+					$controller->SetParam('username', $_POST['username']);
+				if (!empty($_POST['password']))
+					$controller->SetParam('password', $_POST['password']);
+				break;
+
+			case 'logout':
+				$controller = new GitPHP_Controller_Logout();
+				break;
+
+			case 'remotes':
+				$controller = new GitPHP_Controller_Remotes();
+				break;
+
+
 			case 'graph':
 			case 'graphs':
 				$controller = new GitPHP_Controller_Graph();
 				break;
-
 			case 'graphdata':
 				$controller = new GitPHP_Controller_GraphData();
 				break;
-
 			default:
 				if (!empty($params['project'])) {
 					$controller = new GitPHP_Controller_Project();
@@ -724,19 +681,7 @@ class GitPHP_Router
 				continue;
 			if (!empty($querystr))
 				$querystr .= '&';
-
-			switch ($var)
-			{
-				case 'f':
-				case 'p':
-					if (!$this->cleanurl) {
-						// do not encode file slashes, not required
-						$querystr .= $var . '=' . GitPHP_Util::UrlEncodeFilePath($val);
-						continue;
-					}
-				default:
-					$querystr .= $var . '=' . rawurlencode($val);
-			}
+			$querystr .= $var . '=' . rawurlencode($val);
 		}
 
 		return $querystr;
@@ -784,7 +729,7 @@ class GitPHP_Router
 	{
 		if ($value instanceof GitPHP_Project) {
 			return $value->GetProject();
-		} else if (is_string($value)) {
+		} else if (is_string($project)) {
 			return $value;
 		}
 	}

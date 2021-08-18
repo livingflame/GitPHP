@@ -11,49 +11,43 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 {
 
 	/**
-	 * Large blob threshold
-	 * @var int
-	 */
-	const LargeBlobSize = 5242880;	// 5 megs
-
-	/**
 	 * The blob data
+	 *
 	 * @var string
 	 */
 	protected $data;
 
 	/**
 	 * Whether data has been read
+	 *
 	 * @var boolean
 	 */
 	protected $dataRead = false;
 
 	/**
 	 * The blob size
+	 *
 	 * @var int
 	 */
 	protected $size = null;
 
 	/**
-	 * Whether the data is binary
-	 * @var boolean|null
-	 */
-	protected $binary = null;
-
-	/**
 	 * Whether data has been encoded for serialization
+	 *
 	 * @var boolean
 	 */
 	protected $dataEncoded = false;
 
 	/**
 	 * Observers
+	 *
 	 * @var array
 	 */
 	protected $observers = array();
 
 	/**
 	 * Data load strategy
+	 *
 	 * @var GitPHP_BlobLoadStrategy_Interface
 	 */
 	protected $strategy;
@@ -79,7 +73,7 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 	 * Gets the blob data
 	 *
 	 * @param boolean $explode true to explode data into an array of lines
-	 * @return string blob data
+	 * @return string|string[] blob data
 	 */
 	public function GetData($explode = false)
 	{
@@ -93,16 +87,6 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 			return explode("\n", $this->data);
 		else
 			return $this->data;
-	}
-
-	/**
-	 * Gets whether data has been loaded
-	 *
-	 * @return boolean true if data is loaded
-	 */
-	public function DataLoaded()
-	{
-		return $this->dataRead;
 	}
 
 	/**
@@ -129,29 +113,8 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 
 		$this->dataEncoded = false;
 
-		$datachanged = false;
-
-		if ($this->size === null) {
-			$this->size = strlen($this->data);
-			$datachanged = true;
-		}
-
-		if ($this->binary === null) {
-			$this->binary = GitPHP_Blob::DataIsBinary($this->data);
-			$datachanged = true;
-		}
-
-		if ($this->size > GitPHP_Blob::LargeBlobSize) {
-			$this->data = null;
-			$this->dataRead = false;
-		} else {
-			$datachanged = true;
-		}
-
-		if ($datachanged) {
-			foreach ($this->observers as $observer) {
-				$observer->ObjectChanged($this, GitPHP_Observer_Interface::CacheableDataChange);
-			}
+		foreach ($this->observers as $observer) {
+			$observer->ObjectChanged($this, GitPHP_Observer_Interface::CacheableDataChange);
 		}
 	}
 
@@ -162,15 +125,11 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 	 */
 	public function GetSize()
 	{
-		if ($this->size === null) {
-			$this->size = $this->strategy->Size($this);
-
-			foreach ($this->observers as $observer) {
-				$observer->ObjectChanged($this, GitPHP_Observer_Interface::CacheableDataChange);
-			}
+		if ($this->size !== null) {
+			return $this->size;
 		}
 
-		return $this->size;
+		return strlen($this->GetData());
 	}
 
 	/**
@@ -190,15 +149,14 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 	 */
 	public function IsBinary()
 	{
-		if ($this->binary === null) {
-			$this->binary = GitPHP_Blob::DataIsBinary($this->GetData());
+		if (!$this->dataRead)
+			$this->ReadData();
 
-			foreach ($this->observers as $observer) {
-				$observer->ObjectChanged($this, GitPHP_Observer_Interface::CacheableDataChange);
-			}
-		}
+		$data = $this->GetData();
+		if (strlen($data) > 8000)
+			$data = substr($data, 0, 8000);
 
-		return $this->binary;
+		return strpos($data, chr(0)) !== false;
 	}
 
 	/**
@@ -268,15 +226,10 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 	 */
 	public function __sleep()
 	{
-		$properties = array('data', 'dataRead', 'dataEncoded', 'binary', 'size');
-
-		if ($this->dataRead && strlen($this->data) > GitPHP_Blob::LargeBlobSize) {
-			$this->data = null;
-			$this->dataRead = false;
-		}
-		
-		if ($this->dataRead && !$this->dataEncoded)
+		if (!$this->dataEncoded)
 			$this->EncodeData();
+
+		$properties = array('data', 'dataRead', 'dataEncoded');
 
 		return array_merge($properties, parent::__sleep());
 	}
@@ -294,35 +247,13 @@ class GitPHP_Blob extends GitPHP_FilesystemObject implements GitPHP_Observable_I
 	/**
 	 * Generates a blob cache key
 	 *
-	 * @param string|GitPHP_Project $proj project
+	 * @param string $proj project
 	 * @param string $hash hash
 	 * @return string cache key
 	 */
 	public static function CacheKey($proj, $hash)
 	{
-		if (is_string($proj))
-			$projName = $proj;
-		else
-			$projName = $proj->GetProject();
-
-		return 'project|' . $projName . '|blob|' . $hash;
-	}
-
-	/**
-	 * Determines whether a data buffer is binary
-	 *
-	 * @param string $data data buffer
-	 * @return boolean true if binary
-	 */
-	public static function DataIsBinary($data)
-	{
-		if (empty($data))
-			return false;
-
-		if (strlen($data) > 8000)
-			$data = substr($data, 0, 8000);
-
-		return strpos($data, chr(0)) !== false;
+		return 'project|' . $proj . '|blob|' . $hash;
 	}
 
 }

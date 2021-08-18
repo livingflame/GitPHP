@@ -68,25 +68,18 @@ class GitPHP_Controller_Blobdiff extends GitPHP_Controller_DiffBase
 			$this->tpl->assign('file', $this->params['file']);
 
 		$filediff = $this->GetProject()->GetObjectManager()->GetFileDiff($this->params['hashparent'], $this->params['hash']);
-
-		$filediff->GetStats();
-
 		$this->tpl->assign('filediff', $filediff);
 
 		if ($this->Plain()) {
 			return;
 		}
 
-		if (isset($this->params['output']) && ($this->params['output'] == 'sidebyside')) {
+		if (isset($this->params['sidebyside']) && ($this->params['sidebyside'] === true)) {
 			$this->tpl->assign('sidebyside', true);
 		}
 
 		$commit = $this->GetProject()->GetCommit($this->params['hashbase']);
 		$this->tpl->assign('commit', $commit);
-
-		$mimetype = GitPHP_Mime::FileMime($this->params['file'], true);
-		$filediff->isPicture = ($mimetype == 'image');
-		$this->tpl->assign('picture', $filediff->isPicture);
 
 		$blobparent = $this->GetProject()->GetObjectManager()->GetBlob($this->params['hashparent']);
 		$blobparent->SetCommit($commit);

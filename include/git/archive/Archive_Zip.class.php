@@ -67,50 +67,24 @@ class GitPHP_Archive_Zip implements GitPHP_ArchiveStrategy_Interface
 		if ($this->handle) {
 			return true;
 		}
+		
+		$hash = $archive->GetObject()->GetHash();
+		$file = $archive->GetCacheDir() . $archive->GetFilename();
+		if(!is_dir(dirname($file))){
+			mkdir(dirname($file), 0777, true);
+		}
 
 		$args = array();
 		$args[] = '--format=zip';
 		if ($this->compressLevel)
 			$args[] = '-' . $this->compressLevel;
-		$args[] = "--prefix='" . $archive->GetPrefix() . "'";
-		$args[] = $archive->GetObject()->GetHash();
+		$args[] = '--output=' . escapeshellarg($file);
+		$args[] = $hash;
 
-		$this->handle = $this->exe->Open($archive->GetProject()->GetPath(), GIT_ARCHIVE, $args);
+		return $this->exe->ShellExecute($archive->GetProject()->GetPath(), GIT_ARCHIVE, $args);
 
-		return ($this->handle !== false);
 	}
 
-	/**
-	 * Read a chunk of the archive data
-	 *
-	 * @param int $size size of data to read
-	 * @return string|boolean archive data or false
-	 */
-	public function Read($size = 1048576)
-	{
-		if (!$this->handle)
-			return false;
-
-		if (feof($this->handle))
-			return false;
-
-		return fread($this->handle, $size);
-	}
-
-	/**
-	 * Close archive descriptor
-	 */
-	public function Close()
-	{
-		if (!$this->handle)
-			return true;
-
-		pclose($this->handle);
-
-		$this->handle = null;
-
-		return true;
-	}
 
 	/**
 	 * Gets the file extension for this format

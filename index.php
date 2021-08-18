@@ -10,13 +10,6 @@
  */
 
 /**
- * Use utf-8 encoding
- */
-if (function_exists('mb_internal_encoding')) {
-	mb_internal_encoding("UTF-8");
-}
-
-/**
  * Define start time / memory for benchmarking
  */
 define('GITPHP_START_TIME', microtime(true));
@@ -34,6 +27,11 @@ define('GITPHP_LIBDIR', GITPHP_BASEDIR . 'lib/');
 define('GITPHP_SMARTYDIR', GITPHP_LIBDIR . 'smarty/libs/');
 define('GITPHP_GESHIDIR', GITPHP_LIBDIR . 'geshi/');
 
+define('GITPHP_COMPRESS_TAR', 'tar');
+define('GITPHP_COMPRESS_BZ2', 'tbz2');
+define('GITPHP_COMPRESS_GZ', 'tgz');
+define('GITPHP_COMPRESS_ZIP', 'zip');
+
 /**
  * Low level setup
  */
@@ -46,27 +44,24 @@ date_default_timezone_set('UTC');
  * Version header
  */
 include(GITPHP_INCLUDEDIR . 'version.php');
+include('functions.php');
 
 /**
  * Autoload setup
  */
 require(GITPHP_INCLUDEDIR . 'AutoLoader.class.php');
-spl_autoload_register('GitPHP_AutoLoader::AutoLoad');
+spl_autoload_register(array('GitPHP_AutoLoader', 'AutoLoad'));
 
-/**
- * Compatibility global functions / defines
- */
-include(GITPHP_INCLUDEDIR . 'helpers.php');
 
 $router = new GitPHP_Router();
 
 try {
+
 	$controller = $router->GetController();
 	if ($controller) {
 		$controller->Initialize();
 		$controller->RenderHeaders();
 		$controller->Render();
-		unset($controller);
 	}
 
 } catch (Exception $e) {
@@ -74,11 +69,7 @@ try {
 	$messageController = $router->GetMessageController();
 	$messageController->Initialize();
 
-	$messageController->SetParam('message', $e->getMessage());
-	if ($e instanceof GitPHP_MessageException) {
-		$messageController->SetParam('error', $e->Error);
-		$messageController->SetParam('statuscode', $e->StatusCode);
-	} else {
+	if (!($e instanceof GitPHP_MessageException)) {
 		$config = $messageController->GetConfig();
 		if ($config && $config->GetValue('debug')) {
 			throw $e;
@@ -86,39 +77,26 @@ try {
 	}
 
 	$messageController->SetParam('exception', $e);
-	try {
-		$messageController->RenderHeaders();
-		$messageController->Render();
-	} catch (Exception $e) {
-		echo('<b>Fatal error</b> : '.$e->getMessage().'<pre style="font-size: 8pt;">');
-		if (GitPHP_Config::GetInstance()->GetValue('debug')) {
-			$stack = $e->getTrace();
-			$error = @ error_get_last(); // PHP 5.2
-			if (!empty($error))
-				echo 'Last error at '.str_replace(GITPHP_BASEDIR,'',$error['file']).':'.
-					$error['line'].': '.$error['message'];
-			else
-				foreach ($stack as $t) print_r($t);
-		}
-		die;
-	}
+	$messageController->RenderHeaders();
+	$messageController->Render();
 
 	unset($messageController);
-}
 
-$log = GitPHP_DebugLog::GetInstance();
-if ($log->GetEnabled() && $log->GetCount()) {
-	echo '<div class="debug_footer"><pre>';
-	echo implode("\n", $log->GetEntries());
-	echo '</pre></div>';
 }
 
 unset($router);
 
-GitPHP_ProjectList::DestroyInstance();
-GitPHP_MemoryCache::DestroyInstance();
-GitPHP_Config::DestroyInstance();
-GitPHP_GitExe::DestroyInstance();
-GitPHP_DebugLog::DestroyInstance();
+if (isset($controller)) {
+	$log = $controller->GetLog();
+	if ($log && $log->GetEnabled()) {
+		$entries = $log->GetEntries();
+		foreach ($entries as $logline) {
+			echo "<br />\n" . htmlspecialchars($logline, ENT_QUOTES, 'UTF-8', true);
+		}
+		unset($logline);
+		unset($entries);
+	}
+	unset($controller);
+}
 
 ?>

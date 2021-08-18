@@ -1,5 +1,5 @@
 <?php
-/**
+/** 
  * Custom exception when an invalid directory is specified
  *
  * @author Christopher Han <xiphux@gmail.com>

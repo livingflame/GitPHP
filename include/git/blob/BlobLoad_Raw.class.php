@@ -7,7 +7,7 @@
  * @package GitPHP
  * @subpackage Git\Blob
  */
-class GitPHP_BlobLoad_Raw extends GitPHP_BlobLoad_Base
+class GitPHP_BlobLoad_Raw implements GitPHP_BlobLoadStrategy_Interface
 {
 	/**
 	 * Object loader
@@ -20,16 +20,13 @@ class GitPHP_BlobLoad_Raw extends GitPHP_BlobLoad_Base
 	 * Constructor
 	 *
 	 * @param GitPHP_GitObjectLoader $objectLoader object loader
-	 * @param GitPHP_GitExe $exe git exe
 	 */
-	public function __construct($objectLoader, $exe)
+	public function __construct($objectLoader)
 	{
 		if (!$objectLoader)
 			throw new Exception('Git object loader is required');
 
 		$this->objectLoader = $objectLoader;
-
-		parent::__construct($exe);
 	}
 
 	/**
@@ -44,22 +41,5 @@ class GitPHP_BlobLoad_Raw extends GitPHP_BlobLoad_Base
 			return;
 
 		return $this->objectLoader->GetObject($blob->GetHash());
-	}
-
-	/**
-	 * Gets the size of a blob
-	 *
-	 * @param GitPHP_Blob $blob blob
-	 * @return int blob size
-	 */
-	public function Size($blob)
-	{
-		if (!$blob)
-			return;
-
-		if ($blob->DataLoaded())
-			return strlen($blob->GetData());
-
-		return $this->LoadSize($blob);
 	}
 }

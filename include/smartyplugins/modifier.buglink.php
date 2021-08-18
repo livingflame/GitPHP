@@ -17,7 +17,7 @@ function smarty_modifier_buglink($text, $pattern = null, $link = null)
 	if (empty($text) || empty($pattern) || empty($link))
 		return $text;
 
-	$fullLink = '<a class="buglink" href="' . $link . '">${0}</a>';
+	$fullLink = '<a href="' . $link . '">${0}</a>';
 
 	return preg_replace($pattern, $fullLink, $text);
 }

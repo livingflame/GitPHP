@@ -11,18 +11,21 @@ class GitPHP_GitObjectLoader
 {
 	/**
 	 * The project
+	 *
 	 * @var GitPHP_Project
 	 */
 	protected $project;
 
 	/**
 	 * The list of packs
+	 *
 	 * @var GitPHP_Pack[]
 	 */
 	protected $packs = array();
 
 	/**
 	 * Whether packs have been read
+	 *
 	 * @var boolean
 	 */
 	protected $packsRead = false;
@@ -42,6 +45,8 @@ class GitPHP_GitObjectLoader
 
 	/**
 	 * Gets the project
+	 *
+	 * @return GitPHP_Project project
 	 */
 	public function GetProject()
 	{
@@ -61,33 +66,26 @@ class GitPHP_GitObjectLoader
 			return false;
 		}
 
-		$wanted_type = $type;
-
 		// first check if it's unpacked
 		$path = $this->project->GetPath() . '/objects/' . substr($hash, 0, 2) . '/' . substr($hash, 2);
 		if (file_exists($path)) {
 			list($header, $data) = explode("\0", gzuncompress(file_get_contents($path)), 2);
-			if (preg_match('/^([A-Za-z]+) /', $header, $typestr)) {
-				switch ($typestr[1]) {
-					case 'commit':
-						$type = GitPHP_Pack::OBJ_COMMIT;
-						break;
-					case 'tree':
-						$type = GitPHP_Pack::OBJ_TREE;
-						break;
-					case 'blob':
-						$type = GitPHP_Pack::OBJ_BLOB;
-						break;
-					case 'tag':
-						$type = GitPHP_Pack::OBJ_TAG;
-						break;
-				}
+			sscanf($header, "%s %d", $typestr, $size);
+			switch ($typestr) {
+				case 'commit':
+					$type = GitPHP_Pack::OBJ_COMMIT;
+					break;
+				case 'tree':
+					$type = GitPHP_Pack::OBJ_TREE;
+					break;
+				case 'blob':
+					$type = GitPHP_Pack::OBJ_BLOB;
+					break;
+				case 'tag':
+					$type = GitPHP_Pack::OBJ_TAG;
+					break;
 			}
 			return $data;
-		}
-
-		if ($wanted_type != 0 && $type != $wanted_type) {
-			throw new Exception('Invalid raw object type');
 		}
 
 		if (!$this->packsRead) {
@@ -113,12 +111,8 @@ class GitPHP_GitObjectLoader
 		$dh = opendir($this->project->GetPath() . '/objects/pack');
 		if ($dh !== false) {
 			while (($file = readdir($dh)) !== false) {
-				if (preg_match('/^pack-([0-9A-Fa-f]{40})\.pack$/', $file, $regs)) {
-					try {
-						$this->packs[] = new GitPHP_Pack($this->project, $regs[1]);
-					} catch (Exception $e) {
-						continue;
-					}
+				if (preg_match('/^pack-([0-9A-Fa-f]{40})\.idx$/', $file, $regs)) {
+					$this->packs[] = new GitPHP_Pack($this->project, $regs[1], $this);
 				}
 			}
 		}
@@ -168,10 +162,10 @@ class GitPHP_GitObjectLoader
 			return $prefix;
 		}
 
-		for ($len = $abbrevLen+1; $len < 40; $len++) {
+		for ($len = strlen($prefix)+1; $len < 40; $len++) {
 			$prefix = substr($hash, 0, $len);
 
-			foreach (array_keys($hashMap) as $matchingHash) {
+			foreach ($hashMap as $matchingHash => $val) {
 				if (substr_compare($matchingHash, $prefix, 0, $len) !== 0) {
 					unset($hashMap[$matchingHash]);
 				}
@@ -188,8 +182,8 @@ class GitPHP_GitObjectLoader
 	/**
 	 * Expands an abbreviated hash to the full hash
 	 *
-	 * @param string $abbrevHash
-	 * @return string hash
+	 * @param string $abbrevHash abbreviated hash
+	 * @return string full hash
 	 */
 	public function ExpandHash($abbrevHash)
 	{
@@ -198,29 +192,32 @@ class GitPHP_GitObjectLoader
 		}
 
 		$matches = $this->FindHashObjects($abbrevHash);
-		if (count($matches) > 0) {
-			return $matches[0];
-		}
 
 		if (!$this->packsRead) {
 			$this->ReadPacks();
 		}
 
 		foreach ($this->packs as $pack) {
-			$matches = $pack->FindHashes($abbrevHash);
-			if (count($matches) > 0) {
-				return $matches[0];
-			}
+			$matches = array_merge($matches, $pack->FindHashes($abbrevHash));
 		}
 
-		return $abbrevHash;
+		$matches = array_unique($matches);
+
+		if (count($matches) < 1)
+			return $abbrevHash;
+
+		if (count($matches) > 1) {
+			throw new GitPHP_AmbiguousHashException($abbrevHash);
+		}
+
+		return $matches[0];
 	}
 
 	/**
 	 * Finds loose hash files matching a given prefix
 	 *
 	 * @param string $prefix hash prefix
-	 * @return array array of hash objects
+	 * @return string[] array of hashes
 	 */
 	private function FindHashObjects($prefix)
 	{

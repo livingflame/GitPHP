@@ -12,32 +12,43 @@ class GitPHP_GitConfig
 
 	/**
 	 * Default config value type (no conversion)
+	 *
+	 * @var int
 	 */
 	const TypeDefault = 1;
 
 	/**
 	 * Integer config value type
+	 *
+	 * @var int
 	 */
 	const TypeInteger = 2;
 
 	/**
 	 * Boolean config value type
+	 *
+	 * @var int
 	 */
 	const TypeBoolean = 3;
 	
 	/**
 	 * The config file path
+	 *
 	 * @var string
 	 */
 	protected $configPath = null;
 
 	/**
-	 * Stores whether the config file has been loaded
+	 * Whether the config file has been loaded
+	 *
+	 * @var string
 	 */
 	protected $configRead = false;
 
 	/**
-	 * Stores config values
+	 * Config values
+	 *
+	 * @var array
 	 */
 	protected $config = array();
 
@@ -48,9 +59,11 @@ class GitPHP_GitConfig
 	 */
 	public function __construct($configPath)
 	{
-		if (is_string($configPath)) {
-			$this->configPath = $configPath;
+		if (!is_readable($configPath)) {
+			throw new Exception('Git config file not readable');
 		}
+
+		$this->configPath = $configPath;
 	}
 
 	/**
@@ -100,30 +113,13 @@ class GitPHP_GitConfig
 			$values = $this->config[$key];
 		}
 
-		if ((count($values) == 1) || (!$multiValue)) {
+		if (!$multiValue) {
 			// single value
 			return $values[0];
 		} else {
 			// multivalue
 			return $values;
 		}
-	}
-
-	/**
-	 * Sets a config value
-	 */
-	public function SetValue($key, $value)
-	{
-		if (empty($this->configPath))
-			return false;
-
-		// try to save project description if Unnamed (file may be protected)
-		if ($key == 'gitphp.description') {
-			$description = dirname($this->configPath).'/description';
-			return @ file_put_contents($description, $value);
-		}
-
-		return true;
 	}
 
 	/**
@@ -150,9 +146,6 @@ class GitPHP_GitConfig
 	private function LoadConfig()
 	{
 		$this->configRead = true;
-
-		if (empty($this->configPath))
-			return;
 
 		$data = explode("\n", file_get_contents($this->configPath));
 

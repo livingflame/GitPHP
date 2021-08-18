@@ -16,7 +16,7 @@ class GitPHP_AmbiguousHashException extends GitPHP_MessageException
 	 */
 	public $Hash;
 
-	/**
+	/** 
 	 * Constructor
 	 *
 	 * @param string $hash hash

@@ -47,12 +47,9 @@ define(["jquery", 'modules/snapshotformats', 'modules/resources'],
 					delay: 150
 				},
 				style: {
-					classes: 'ui-tooltip-gitphp qtip-light qtip-shadow'
+					classes: 'ui-tooltip-gitphp ui-tooltip-light ui-tooltip-shadow'
 				},
 				position: {
-					adjust: {
-						screen: true
-					},
 					viewport: $(window)
 				}
 			}

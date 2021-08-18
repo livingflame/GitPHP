@@ -29,7 +29,6 @@ function smarty_function_geturl($params, Smarty_Internal_Template $template)
 		trigger_error("geturl: missing router");
 		return;
 	}
-
 	$finalurl = $router->GetUrl($params, $full);
 	if ($escape)
 		$finalurl = htmlspecialchars($finalurl, ENT_COMPAT, 'UTF-8', false);

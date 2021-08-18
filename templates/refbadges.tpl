@@ -15,7 +15,7 @@
 			<a href="{geturl project=$project action=shortlog hash=$commithead}">{$commithead->GetName()}</a>
 		</span>
 	{/foreach}
-	{foreach from=$commit->GetRemoteHeads() item=commithead}
+	{foreach from=$commit->GetRemotes() item=commithead}
 		<span class="remote head">
 			<a href="{geturl project=$project action=shortlog hash=$commithead}">{$commithead->GetName()}</a>
 		</span>

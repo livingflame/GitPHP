@@ -1,1 +1,1 @@
-{$blob->GetData()}
+{$blob->GetData()|echobig}

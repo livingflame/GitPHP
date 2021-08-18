@@ -16,9 +16,17 @@ class GitPHP_Controller_ProjectList extends GitPHP_ControllerBase
 	public function Initialize()
 	{
 		$this->multiProject = true;
+
 		parent::Initialize();
+
+		if ($this->userList && ($this->userList->GetCount() > 0)) {
+			if (!$this->config->GetValue('showrestrictedprojects') || (isset($this->params['opml']) && ($this->params['opml'] === true)) || (isset($this->params['txt']) && ($this->params['txt'] === true))) {
+				$this->projectList->FilterByUser((!empty($_SESSION['gitphpuser']) ? $_SESSION['gitphpuser'] : null));
+			}
+		}
+
 		if (empty($this->params['sort']))
-			$this->params['sort'] = $this->config->GetValue('projectlist_order', 'project');
+			$this->params['sort'] = 'age';
 	}
 
 	/**
@@ -43,12 +51,14 @@ class GitPHP_Controller_ProjectList extends GitPHP_ControllerBase
 	 */
 	protected function GetCacheKey()
 	{
+		$cachekey = (!empty($_SESSION['gitphpuser']) ? $_SESSION['gitphpuser'] : '');
 		if (isset($this->params['opml']) && ($this->params['opml'] === true)) {
-			return '';
+			return $cachekey;
 		} else if (isset($this->params['txt']) && ($this->params['txt'] === true)) {
-			return '';
+			return $cachekey;
 		}
-		return $this->params['sort'] . '|' . (isset($this->params['search']) ? $this->params['search'] : '');
+		$cachekey .= '|' . $this->params['sort'] . '|' . (isset($this->params['search']) ? $this->params['search'] : '');
+		return $cachekey;
 	}
 
 	/**
@@ -89,6 +99,8 @@ class GitPHP_Controller_ProjectList extends GitPHP_ControllerBase
 			$this->headers[] = "Content-type: text/plain; charset=utf-8";
 			$this->headers[] = "Content-Disposition: inline; filename=\"index.aux\"";
 			$this->DisableLogging();
+		} else {
+			parent::LoadHeaders();
 		}
 	}
 
@@ -99,22 +111,20 @@ class GitPHP_Controller_ProjectList extends GitPHP_ControllerBase
 	{
 		$this->tpl->assign('sort', $this->params['sort']);
 		
-		$projectList = GitPHP_ProjectList::GetInstance();
-		$projectList->Sort($this->params['sort']);
+		$this->projectList->Sort($this->params['sort']);
 
 		if ((empty($this->params['opml']) || ($this->params['opml'] !== true)) &&
 		    (empty($this->params['txt']) || ($this->params['txt'] !== true)) &&
 		    (!empty($this->params['search']))) {
 		    	$this->tpl->assign('search', $this->params['search']);
-			$matches = $projectList->Filter($this->params['search']);
+			$matches = $this->projectList->Filter($this->params['search']);
 			if (count($matches) > 0) {
 				$this->tpl->assign('projectlist', $matches);
 			}
 		} else {
-			if ($projectList->Count() > 0)
-				$this->tpl->assign('projectlist', $projectList);
+			if ($this->projectList->Count() > 0)
+				$this->tpl->assign('projectlist', $this->projectList);
 		}
-
 		//From config, show hide columns
 		$cfg = $this->config;
 		$this->tpl->assign('show_branch', $cfg->GetValue('projectlist_show_branch'));

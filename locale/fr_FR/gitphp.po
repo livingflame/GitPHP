@@ -91,12 +91,7 @@ msgstr "unifié"
 # Used as a link to the first page in a list of results
 #: templates/search.tpl templates/searchfiles.tpl
 msgid "first"
-msgstr "premier"
-
-#: templates/blobdiff.tpl
-#: templates/commitdiff.tpl
-msgid "last"
-msgstr "dernier"
+msgstr "début"
 
 # Used as a link to the previous page in a list of results
 #: templates/search.tpl templates/searchfiles.tpl templates/log.tpl
@@ -440,8 +435,8 @@ msgstr "Type de recherche non valide"
 # %1$s: the user's search string
 #: include/controller/Controller_Search.class.php:165
 #, php-format
-msgid "No matches for \"%1$s\""
-msgstr "Pas de résultats pour \"%1$s\""
+msgid "No matches for \"%1\""
+msgstr "Pas de résultats pour \"%1\""
 
 # A type of filesystem object stored in a project
 #: include/git/Blob.class.php:179
@@ -692,8 +687,8 @@ msgstr "(tous)"
 # %2$s: the filename of the second file
 #: include/git/FileDiff.class.php:810
 #, php-format
-msgid "Binary files %1$s and %2$s differ"
-msgstr "Fichiers %1$s et %2$s différents"
+msgid "Binary files %1 and %2 differ"
+msgstr "Fichiers %1 et %2 différents"
 
 # Used to label the url of the website of the project
 #: templates/project.tpl
@@ -709,24 +704,3 @@ msgstr "site web"
 #: include/Resource.class.php:121
 msgid "English"
 msgstr "Français"
-
-#: templates/blobdiff.tpl
-#: templates/commitdiff.tpl
-msgid "toggle tabs"
-msgstr "afficher tabs"
-
-#: templates/blobdiff.tpl
-#: templates/commitdiff.tpl
-msgid "numbers"
-msgstr "numéros"
-
-#: templates/blobdiff.tpl
-#: templates/commitdiff.tpl
-msgid "left only"
-msgstr "volet gauche"
-
-#: templates/blobdiff.tpl
-#: templates/commitdiff.tpl
-msgid "right only"
-msgstr "volet droit"
-

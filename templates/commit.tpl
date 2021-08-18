@@ -19,7 +19,7 @@
 {else}
 	{include file='title.tpl' titlecommit=$commit titletree=$tree target='tree'}
 {/if}
-
+ 
  <div class="title_text">
    {* Commit data *}
    <table>
@@ -31,12 +31,12 @@
      <tr>
        <td></td>
        <td>
-       {$commit->GetAuthorEpoch()|date_format:"%a, %d %b %Y %H:%M:%S"} {date('T')}
+       <time datetime="{$commit->GetAuthorEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{$commit->GetAuthorEpoch()|date_format:"%a, %d %b %Y %H:%M:%S %z"}</time>
        {assign var=hourlocal value=$commit->GetAuthorLocalEpoch()|date_format:"%H"}
        {if $hourlocal < 6}
-       (<span class="latenight">{$commit->GetAuthorLocalEpoch()|date_format:"%R"}</span> {$commit->GetAuthorTimezone()})
+       (<time datetime="{$commit->GetAuthorLocalEpoch()|date_format:"%Y-%m-%dT%H:%M:%S"}{$commit->GetAuthorTimezone(true)}"><span class="latenight">{$commit->GetAuthorLocalEpoch()|date_format:"%R"}</span> {$commit->GetAuthorTimezone()}</time>)
        {else}
-       ({$commit->GetAuthorLocalEpoch()|date_format:"%R"} {$commit->GetAuthorTimezone()})
+       (<time datetime="{$commit->GetAuthorLocalEpoch()|date_format:"%Y-%m-%dT%H:%M:%S"}{$commit->GetAuthorTimezone(true)}">{$commit->GetAuthorLocalEpoch()|date_format:"%R"} {$commit->GetAuthorTimezone()}</time>)
        {/if}
        </td>
        <td></td>
@@ -48,7 +48,7 @@
      </tr>
      <tr>
        <td></td>
-       <td> {$commit->GetCommitterEpoch()|date_format:"%a, %d %b %Y %H:%M:%S"} {date('T')} ({$commit->GetCommitterLocalEpoch()|date_format:"%R"} {$commit->GetCommitterTimezone()})</td>
+       <td> <time datetime="{$commit->GetCommitterEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{$commit->GetCommitterEpoch()|date_format:"%a, %d %b %Y %H:%M:%S %z"}</time> (<time datetime="{$commit->GetCommitterLocalEpoch()|date_format:"%Y-%m-%dT%H:%M:%S"}{$commit->GetCommitterTimezone(true)}">{$commit->GetCommitterLocalEpoch()|date_format:"%R"} {$commit->GetCommitterTimezone()}</time>)</td>
        <td></td>
      </tr>
      <tr>
@@ -64,54 +64,42 @@
      {foreach from=$commit->GetParents() item=par}
        <tr>
          <td>{t}parent{/t}</td>
-         <td class="monospace"><a href="{geturl project=$project action=commit hash=$par}" class="list">{$par->GetHash()}</a></td>
-         <td class="link"><a href="{geturl project=$project action=commit hash=$par}">{t}commit{/t}</a> | <a 
-           href="{geturl project=$project action=commitdiff hash=$commit hashparent=$par output=unified}">{t}commitdiff{/t} {t}unified{/t}</a> | <a
-           href="{geturl project=$project action=commitdiff hash=$commit hashparent=$par output=sidebyside}">{t}side by side{/t}</a>
-         </td>
+	 <td class="monospace"><a href="{geturl project=$project action=commit hash=$par}" class="list">{$par->GetHash()}</a></td>
+         <td class="link"><a href="{geturl project=$project action=commit hash=$par}">{t}commit{/t}</a> | <a href="{geturl project=$project action=commitdiff hash=$commit hashparent=$par}">{t}commitdiff{/t}</a></td>
        </tr>
      {/foreach}
    </table>
  </div>
-{assign var=comment value=$commit->GetComment()}
-{if end($comment) != $commit->GetTitle()}
  <div class="page_body">
    {assign var=bugpattern value=$project->GetBugPattern()}
    {assign var=bugurl value=$project->GetBugUrl()}
-   <div class="commit_comment" style="overflow-y: auto; max-height: 30em;">
-   {foreach from=$comment item=line}
-     {if strstr(trim($line),'-by: ') || strstr(trim($line),'Cc: ')}
+   {foreach from=$commit->GetComment() item=line}
+     {if strncasecmp(trim($line),'Signed-off-by:',14) == 0}
      <span class="signedOffBy">{$line|htmlspecialchars|buglink:$bugpattern:$bugurl}</span>
-     {elseif preg_match('~http(s)?:~',$line)}
-     <span class="signedOffBy commentLink">{$line|buglink:'/(http(s)?:\/\/)(.)*[\.](.)*$/':"\$0"}</span>
-     {elseif strncasecmp(trim($line),'Change-Id:',10) == 0}
-     <span class="changeId">{$line|buglink:$bugpattern:$bugurl}</span>
      {else}
-     {$line|htmlspecialchars|commithash|buglink:$bugpattern:$bugurl}
+     {$line|htmlspecialchars|buglink:$bugpattern:$bugurl}
      {/if}
      <br />
    {/foreach}
-   </div>
  </div>
-{/if}
  <div class="list_head">
-   {if $treediff->Count() > 5}
+   {if $treediff->Count() > 10}
      {t count=$treediff->Count() 1=$treediff->Count() plural="%1 files changed:"}%1 file changed:{/t}
    {/if}
  </div>
- <table class="filelist">
+ <table>
    {* Loop and show files changed *}
    {foreach from=$treediff item=diffline}
      <tr class="{cycle values="light,dark"}">
 	 <td class="commit_fadd">{if $diffline->totAdd}+{$diffline->totAdd}{/if}</td>
 	 <td class="commit_fdel">{if $diffline->totDel}-{$diffline->totDel}{/if}</td>
        {if $diffline->GetStatus() == "A"}
-	 <td>
+         <td>
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() hashbase=$commit file=$diffline->GetFromFile()}" class="list">
 	     {$diffline->GetFromFile()}
 	   </a>
 	 </td>
-	 <td>
+         <td>
 	   <span class="newfile">
 	     {localfiletype type=$diffline->GetToFileType() assign=localtotype}
 	     [
@@ -119,30 +107,30 @@
 	       {assign var=tomode value=$diffline->GetToModeShort()}
 	       {t 1=$localtotype 2=$tomode}new %1 with mode %2{/t}
 	     {else}
-	       {t 1=$localtotype}new %1{/t}
+	     {t 1=$localtotype}new %1{/t}
 	     {/if}
 	     ]
 	   </span>
 	 </td>
-	 <td class="link">
+         <td class="link">
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() hashbase=$commit file=$diffline->GetFromFile()}">{t}blob{/t}</a>
 	    | 
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() file=$diffline->GetFromFile() output=plain}">{t}plain{/t}</a>
 	 </td>
        {elseif $diffline->GetStatus() == "D"}
-	 {assign var=parent value=$commit->GetParent()}
-	 <td>
+         {assign var=parent value=$commit->GetParent()}
+         <td>
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetFromBlob() hashbase=$commit file=$diffline->GetFromFile()}" class="list">
 	     {$diffline->GetFromFile()}
 	   </a>
 	 </td>
-	 <td>
+         <td>
 	   <span class="deletedfile">
 	     {localfiletype type=$diffline->GetFromFileType() assign=localfromtype}
 	     [ {t 1=$localfromtype}deleted %1{/t} ]
 	   </span>
 	 </td>
-	 <td class="link">
+         <td class="link">
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetFromBlob() hashbase=$commit file=$diffline->GetFromFile()}">{t}blob{/t}</a>
 	    | 
 	   <a href="{geturl project=$project action=history hash=$parent file=$diffline->GetFromFile()}">{t}history{/t}</a>
@@ -150,7 +138,7 @@
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetFromBlob() file=$diffline->GetFromFile() output=plain}">{t}plain{/t}</a>
 	 </td>
        {elseif $diffline->GetStatus() == "M" || $diffline->GetStatus() == "T"}
-	 <td>
+         <td>
            {if $diffline->GetToHash() != $diffline->GetFromHash()}
              <a href="{geturl project=$project action=blobdiff hash=$diffline->GetToBlob() hashparent=$diffline->GetFromBlob() hashbase=$commit file=$diffline->GetToFile()}" class="list">
 	       {$diffline->GetToFile()}
@@ -160,8 +148,8 @@
 	       {$diffline->GetToFile()}
 	     </a>
            {/if}
-	 </td>
-	 <td>
+         </td>
+         <td>
 	   {if $diffline->GetFromMode() != $diffline->GetToMode()}
 	     <span class="changedfile">
 	       [
@@ -183,7 +171,7 @@
 		   {t 1=$localfromtype 2=$localtotype}changed from %1 to %2{/t}
 		 {/if}
 	       {else}
-		 {if $diffline->FileModeChanged()}
+	         {if $diffline->FileModeChanged()}
 		   {if $diffline->FromFileIsRegular() && $diffline->ToFileIsRegular()}
 		     {assign var=frommode value=$diffline->GetFromModeShort()}
 		     {assign var=tomode value=$diffline->GetToModeShort()}
@@ -202,8 +190,8 @@
 	     </span>
 	   {/if}
 	 </td>
-	 <td class="link">
-	   <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() hashbase=$commit file=$diffline->GetToFile()}">{t}blob{/t}</a>
+         <td class="link">
+           <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() hashbase=$commit file=$diffline->GetToFile()}">{t}blob{/t}</a>
 	   {if $diffline->GetToHash() != $diffline->GetFromHash()}
 	     | <a href="{geturl project=$project action=blobdiff hash=$diffline->GetToBlob() hashparent=$diffline->GetFromBlob() hashbase=$commit file=$diffline->GetToFile()}">{t}diff{/t}</a>
 	   {/if}
@@ -211,11 +199,11 @@
              | <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() file=$diffline->GetToFile() output=plain}">{t}plain{/t}</a>
 	 </td>
        {elseif $diffline->GetStatus() == "R"}
-	 <td>
+         <td>
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() hashbase=$commit file=$diffline->GetToFile()}" class="list">
 	     {$diffline->GetToFile()}</a>
 	 </td>
-	 <td>
+         <td>
 	   <span class="movedfile">
 	     {capture assign=fromfilelink}
 	     <a href="{geturl project=$project action=blob hash=$diffline->GetFromBlob() hashbase=$commit file=$diffline->GetFromFile()}" class="list">{$diffline->GetFromFile()}</a>
@@ -224,19 +212,19 @@
 	     {assign var=similarity value=$diffline->GetSimilarity()}
 	     {if $diffline->GetFromMode() != $diffline->GetToMode()}
 	       {assign var=tomode value=$diffline->GetToModeShort()}
-	       {t escape=no 1=$fromfilelink 2=$similarity 3=$tomode}moved from %1 with %2% similarity, mode: %3{/t}
+	       {t escape=no 1=$fromfilelink 2=$similarity 3=$tomode}moved from %1 with %2%% similarity, mode: %3{/t}
 	     {else}
-	       {t escape=no 1=$fromfilelink 2=$similarity}moved from %1 with %2% similarity{/t}
+	       {t escape=no 1=$fromfilelink 2=$similarity}moved from %1 with %2%% similarity{/t}
 	     {/if}
 	     ]
 	   </span>
 	 </td>
-	 <td class="link">
+         <td class="link">
 	   <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() hashbase=$commit file=$diffline->GetToFile()}">{t}blob{/t}</a>
 	   {if $diffline->GetToHash() != $diffline->GetFromHash()}
 	     | <a href="{geturl project=$project action=blobdiff hash=$diffline->GetToBlob() hashparent=$diffline->GetFromBlob() hashbase=$commit file=$diffline->GetToFile()}">{t}diff{/t}</a>
 	   {/if}
-	    | <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() file=$diffline->GetToFile() output=plain}}">{t}plain{/t}</a>
+	    | <a href="{geturl project=$project action=blob hash=$diffline->GetToBlob() file=$diffline->GetToFile() output=plain}">{t}plain{/t}</a>
 	 </td>
        {/if}
 

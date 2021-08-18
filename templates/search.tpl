@@ -47,10 +47,9 @@
 {if $results}
 <table>
   {* Print each match *}
-  {assign var=wraptext value=80}
   {foreach from=$results item=result}
     <tr class="{cycle values="light,dark"}">
-      <td title="{if $result->GetAge() > 60*60*24*7*2}{agestring age=$result->GetAge()}{else}{$result->GetCommitterEpoch()|date_format:"%Y-%m-%d"}{/if}"><em>{if $result->GetAge() > 60*60*24*7*2}{$result->GetCommitterEpoch()|date_format:"%Y-%m-%d"}{else}{agestring age=$result->GetAge()}{/if}</em></td>
+      <td title="{if $result->GetAge() > 60*60*24*7*2}{agestring age=$result->GetAge()}{else}{$result->GetCommitterEpoch()|date_format:"%Y-%m-%d"}{/if}"><em><time datetime="{$result->GetCommitterEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{if $result->GetAge() > 60*60*24*7*2}{$result->GetCommitterEpoch()|date_format:"%Y-%m-%d"}{else}{agestring age=$result->GetAge()}{/if}</time></em></td>
       <td>
         <em>
 	  {if $searchtype == 'author'}
@@ -62,19 +61,15 @@
 	  {/if}
         </em>
       </td>
-      <td><a href="{geturl project=$project action=commit hash=$result}" class="list commitTip" {if strlen($result->GetTitle()) > $wraptext}title="{$result->GetTitle()|escape}"{/if}><strong>{$result->GetTitle($wraptext)|escape:'html'}</strong></a>
+      <td><a href="{geturl project=$project action=commit hash=$result}" class="list commitTip" {if strlen($result->GetTitle()) > 50}title="{$result->GetTitle()|escape}"{/if}><strong>{$result->GetTitle(50)|escape:'html'}</strong></a>
       {if $searchtype == 'commit'}
         {foreach from=$result->SearchComment($search) item=line name=match}
-          <br />{$line|escape|highlight:$search:$wraptext}
+          <br />{$line|escape|highlight:$search:50}
         {/foreach}
       {/if}
       </td>
       {assign var=resulttree value=$result->GetTree()}
-      <td class="link">
-        <a href="{geturl project=$project action=commit hash=$result}">{t}commit{/t}</a>
-      | <a href="{geturl project=$project action=commitdiff hash=$result}">{t}commitdiff{/t}</a>
-      | <a href="{geturl project=$project action=tree hash=$resulttree hashbase=$result}">{t}tree{/t}</a>
-      | <a href="{geturl project=$project action=snapshot hash=$result}" class="snapshotTip">{t}snapshot{/t}</a>
+      <td class="link"><a href="{geturl project=$project action=commit hash=$result}">{t}commit{/t}</a> | <a href="{geturl project=$project action=commitdiff hash=$result}">{t}commitdiff{/t}</a> | <a href="{geturl project=$project action=tree hash=$resulttree hashbase=$result}">{t}tree{/t}</a> | <a href="{geturl project=$project action=snapshot hash=$result}" class="snapshotTip">{t}snapshot{/t}</a>
       </td>
     </tr>
   {/foreach}
@@ -88,12 +83,10 @@
     </tr>
   {/if}
 </table>
-
 {else}
 <div class="message">
 {t 1=$search}No matches for "%1"{/t}
 </div>
 {/if}
-
 
 {/block}

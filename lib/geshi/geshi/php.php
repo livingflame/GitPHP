@@ -993,17 +993,17 @@ $language_data = array(
         ),
     'STYLES' => array(
         'KEYWORDS' => array(
-            1 => 'color: #400000;',
-            2 => 'color: #800000;',
-            3 => 'color: #000080;',
-            4 => 'color: #0000a0;' /*constants*/
+            1 => 'color: #b1b100;',
+            2 => 'color: #000000; font-weight: bold;',
+            3 => 'color: #990000;',
+            4 => 'color: #009900; font-weight: bold;'
             ),
         'COMMENTS' => array(
-            1 => 'color: #666666;',
-            2 => 'color: #666666;',
-            3 => 'color: #0000cc;',
-            4 => 'color: #606060;',
-            'MULTI' => 'color: #666666;'
+            1 => 'color: #666666; font-style: italic;',
+            2 => 'color: #666666; font-style: italic;',
+            3 => 'color: #0000cc; font-style: italic;',
+            4 => 'color: #009933; font-style: italic;',
+            'MULTI' => 'color: #666666; font-style: italic;'
             ),
         'ESCAPE_CHAR' => array(
             0 => 'color: #000099; font-weight: bold;',
@@ -1011,30 +1011,30 @@ $language_data = array(
             2 => 'color: #660099; font-weight: bold;',
             3 => 'color: #660099; font-weight: bold;',
             4 => 'color: #006699; font-weight: bold;',
-            5 => 'color: #006699; font-weight: bold;',
+            5 => 'color: #006699; font-weight: bold; font-style: italic;',
             6 => 'color: #009933; font-weight: bold;',
             'HARD' => 'color: #000099; font-weight: bold;'
             ),
         'BRACKETS' => array(
-            0 => 'color: #003000;'
+            0 => 'color: #009900;'
             ),
         'STRINGS' => array(
-            0 => 'color: #808;',
-            'HARD' => 'color: #808;'
+            0 => 'color: #0000ff;',
+            'HARD' => 'color: #0000ff;'
             ),
         'NUMBERS' => array(
-            0 => 'color: #00f;',
-            GESHI_NUMBER_OCT_PREFIX => 'color: #00f;',
-            GESHI_NUMBER_HEX_PREFIX => 'color: #00f;',
-            GESHI_NUMBER_FLT_SCI_ZERO => 'color:#00f;',
+            0 => 'color: #cc66cc;',
+            GESHI_NUMBER_OCT_PREFIX => 'color: #208080;',
+            GESHI_NUMBER_HEX_PREFIX => 'color: #208080;',
+            GESHI_NUMBER_FLT_SCI_ZERO => 'color:#800080;',
             ),
         'METHODS' => array(
-            1 => 'color: #205040;',
-            2 => 'color: #205040;'
+            1 => 'color: #004000;',
+            2 => 'color: #004000;'
             ),
         'SYMBOLS' => array(
-            0 => 'color: #333380;',
-            1 => 'color: #000000;'
+            0 => 'color: #339933;',
+            1 => 'color: #000000; font-weight: bold;'
             ),
         'REGEXPS' => array(
             0 => 'color: #000088;'

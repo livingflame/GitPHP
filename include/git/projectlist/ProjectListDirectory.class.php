@@ -1,7 +1,4 @@
 <?php
-
-defined('GITPHP_CACHE_PROJECTLIST') || define('GITPHP_CACHE_PROJECTLIST', GITPHP_CACHEDIR.'projectlist.tmp');
-
 /**
  * Lists all projects in a given directory
  *
@@ -12,17 +9,14 @@ defined('GITPHP_CACHE_PROJECTLIST') || define('GITPHP_CACHE_PROJECTLIST', GITPHP
  */
 class GitPHP_ProjectListDirectory extends GitPHP_ProjectListBase
 {
-	/**
-	 * Constants
-	 */
-	const CACHE_PROJECTLIST = GITPHP_CACHE_PROJECTLIST;
 
 	/**
 	 * Whether to only list exported projects
+	 *
 	 * @var boolean
 	 */
 	protected $exportedOnly = false;
-
+    
 	/**
 	 * Ignore working git repositories (project/.git)
 	 */
@@ -43,27 +37,21 @@ class GitPHP_ProjectListDirectory extends GitPHP_ProjectListBase
 	 */
 	protected $curlevel = 0;
 
+	/**
+	 * Stores the config object
+	 */
+	protected $config;
 
 	/**
 	 * Constructor
 	 *
 	 * @param string $projectRoot project root
-	 * @param boolean $exportedOnly whether to only allow exported projects
-	 * @throws Exception if parameter is not a directory
+	 * @param object $config object
 	 */
-	public function __construct($projectRoot, $exportedOnly = false)
+	public function __construct($config)
 	{
-		$this->exportedOnly = $exportedOnly;
-
-		$Config = GitPHP_Config::GetInstance();
-
-		$this->bareOnly    = $Config->GetValue('bareonly', true);
-		$this->sublevels   = $Config->GetValue('subfolder_levels', 0);
-		$this->repoSupport = $Config->GetValue('reposupport', false);
-
-		parent::__construct($projectRoot);
-
-		$this->SetConfig($Config);
+		$this->config    = $config;
+        parent::__construct($config->GetValue('projectroot'));
 	}
 
 	/**
@@ -75,49 +63,18 @@ class GitPHP_ProjectListDirectory extends GitPHP_ProjectListBase
 	{
 		return $this->exportedOnly;
 	}
-
+	
 	/**
 	 * Populates the internal list of projects
 	 */
 	protected function PopulateProjects()
 	{
-		$simpleCache = false;
-
-		if (!$this->config->GetValue('cache')) {
-
-			// cache project list even if object cache is disabled (too much files)
-			$simpleCache = true;
-			$stat = (is_file(self::CACHE_PROJECTLIST)) ? stat(self::CACHE_PROJECTLIST) : FALSE;
-			if ($stat !== FALSE) {
-				$cache_life = '180';  //caching time, in seconds
-				$filemtime = max($stat['mtime'], $stat['ctime']);
-				if  (time() - $filemtime >= $cache_life) {
-					$this->Log('ProjectListDirCache: expired, reloading...');
-				} else {
-					$data = file_get_contents(self::CACHE_PROJECTLIST);
-					$projects = unserialize($data);
-					if (count($projects) > 0) {
-						$this->Log('loaded '.count($projects).' projects from cache');
-						$this->projects = $projects;
-						return;
-					}
-				}
-			}
-		}
-
-		$this->curlevel = 0;
-		$this->RecurseDir($this->projectRoot);
-
-		if (count($this->projects) > 0) {
-			$projects = array();
-			foreach ($this->projects as $proj) {
-				$projects[] = $proj->GetProject();;
-			}
-			if ($simpleCache) {
-				// todo: check new xiphux Cache_File class
-				$this->CacheSaveProjectList();
-			}
-		}
+        $this->exportedOnly = $this->config->GetValue('exportedonly', true);
+		$this->bareOnly    = $this->config->GetValue('bareonly', true);
+		$this->sublevels   = $this->config->GetValue('subfolder_levels', 0);
+		$this->repoSupport = $this->config->GetValue('reposupport', false);
+        $this->curlevel = 0;
+		$this->RecurseDir(GitPHP_Util::AddSlash($this->projectRoot));
 	}
 
 	/**
@@ -194,7 +151,7 @@ class GitPHP_ProjectListDirectory extends GitPHP_ProjectListBase
 	{
 		try {
 
-			$project = new GitPHP_Project($this->projectRoot, $proj);
+			$project = new GitPHP_Project($this->config, $proj);
 
 			$category = trim(dirname($proj));
 			if (!(empty($category) || (strpos($category, '.') === 0))) {
@@ -223,18 +180,6 @@ class GitPHP_ProjectListDirectory extends GitPHP_ProjectListBase
 		}
 
 		return null;
-	}
-
-	/**
-	 * Save and restore project list to prevent parsing directories
-	 */
-	public function CacheSaveProjectList()
-	{
-		$data = serialize($this->projects);
-		if (!is_file(self::CACHE_PROJECTLIST) || $data != file_get_contents(self::CACHE_PROJECTLIST)) {
-			return (file_put_contents(self::CACHE_PROJECTLIST,$data) > 0);
-		}
-		return true;
 	}
 
 }

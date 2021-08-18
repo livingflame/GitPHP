@@ -72,9 +72,6 @@ class GitPHP_Controller_Log extends GitPHP_ControllerBase
 	 */
 	protected function LoadData()
 	{
-		if ($this->GetProject()->isAndroidRepo) {
-			$this->tpl->assign('branch', $this->GetProject()->repoBranch);
-		}
 		$commit = $this->GetProject()->GetCommit($this->params['hash']);
 		$this->tpl->assign('commit', $commit);
 		$this->tpl->assign('head', $this->GetProject()->GetHeadCommit());
@@ -82,19 +79,19 @@ class GitPHP_Controller_Log extends GitPHP_ControllerBase
 
 		$compat = $this->GetProject()->GetCompat();
 		$skip = $this->params['page'] * 100;
+		$strategy = null;
+		//if ($compat || ($skip > $this->config->GetValue('largeskip'))) {
+			$strategy = new GitPHP_LogLoad_Git($this->exe);
+		//} else {
+		//	$strategy = new GitPHP_LogLoad_Raw();
+		//}
+		$revlist = new GitPHP_Log($this->GetProject(), $commit, $strategy, 101, $skip);
 
-		$revlist = new GitPHP_GitLog($this->GetProject(), $commit, 101, $skip);
-		$revlist->SetCompat($compat);
-		if ($this->config->HasKey('largeskip')) {
-			$revlist->SetSkipFallback($this->config->GetValue('largeskip'));
+		if ($revlist->GetCount() > 100) {
+			$this->tpl->assign('hasmorerevs', true);
+			$revlist->SetLimit(100);
 		}
-		if ($revlist) {
-			if ($revlist->GetCount() > 100) {
-				$this->tpl->assign('hasmorerevs', true);
-				$revlist->SetLimit(100);
-			}
-			$this->tpl->assign('revlist', $revlist);
-		}
+		$this->tpl->assign('revlist', $revlist);
 
 		if (isset($this->params['mark'])) {
 			$this->tpl->assign('mark', $this->GetProject()->GetCommit($this->params['mark']));

@@ -7,13 +7,11 @@
  *}
 {extends file='main.tpl'}
 
-{block name=javascriptpaths}
+{block name=javascript}
+require.deps = ['projectlist'];
 {if file_exists('js/projectlist.min.js')}
-GitPHPJSPaths.projectlist = "projectlist.min";
+require.paths.projectlist = "projectlist.min";
 {/if}
-{/block}
-{block name=javascriptmodules}
-GitPHPJSModules = ['projectlist'];
 {/block}
 
 {block name=main}
@@ -31,12 +29,13 @@ git source code archive
 
 <div class="projectSearch">
 <form method="get" action="{geturl}" id="projectSearchForm" enctype="application/x-www-form-urlencoded">
-{t}Search projects{/t}: <input type="text" name="s" class="projectSearchBox" {if $search}value="{$search}"{/if} /> <a href="{geturl}" class="clearSearch" {if !$search}style="display: none;"{/if}>X</a> {if $javascript}<img src="images/search-loader.gif" class="searchSpinner" style="display: none;" alt="{t}Loading…{/t}" />{/if}
+{t}Search projects{/t}: <input type="search" name="s" class="projectSearchBox" {if $search}value="{$search}"{/if} /> <a href="{geturl}" class="clearSearch" {if !$search}style="display: none;"{/if}>X</a> {if $javascript}<img src="images/search-loader.gif" class="searchSpinner" style="display: none;" alt="{t}Loading…{/t}" />{/if}
 </form>
+  <a href="{geturl action=opml}" class="rss_logo">{t}OPML{/t}</a>
+  <a href="{geturl action=projectindex}" class="rss_logo">{t}TXT{/t}</a>
 </div>
 
 <table class="projectList">
-  {assign var=currentcategory value="&nbsp;"}
   {foreach name=projects from=$projectlist item=proj}
     {if $smarty.foreach.projects.first}
       {* Header *}
@@ -63,21 +62,18 @@ git source code archive
           <th><a class="header" href="{geturl sort=branch}">{t}Branch{/t}</a></th>
          {/if}
         {/if}
-        {if $show_owner }
-         {if $sort == "owner"}
+        {if $sort == "owner"}
           <th>{t}Owner{/t}</th>
-         {else}
+        {else}
           <th><a class="header" href="{geturl sort=owner}">{t}Owner{/t}</a></th>
-         {/if}
         {/if}
-        <th class="actions">{t}Actions{/t}</th>
-        <th></th>
+        <th>{t}Actions{/t}</th>
       </tr>
     {/if}
 
-    {if $currentcategory != $proj->GetCategory('&nbsp;')}
-      {assign var=currentcategory value=$proj->GetCategory('&nbsp;')}
-      {if $currentcategory != "&nbsp;" || $sort == "age"}
+    {if $currentcategory != $proj->GetCategory()}
+      {assign var=currentcategory value=$proj->GetCategory()}
+      {if $currentcategory != ''}
         <tr class="light categoryRow">
           <th class="categoryName">{$currentcategory}</th>
           <th></th>
@@ -88,26 +84,35 @@ git source code archive
       {/if}
     {/if}
 
-    <tr class="{cycle values="light,dark"} projectRow">
+    <tr class="{cycle values="light,dark"} projectRow {if $loginenabled && !$proj->UserCanAccess($loggedinuser)}disabled{/if}">
       <td class="projectName">
-        <a href="{geturl project=$proj}" class="list {if $currentcategory != ''}indent{/if}">{$proj->GetProject()}</a>
+        {if !$loginenabled || $proj->UserCanAccess($loggedinuser)}
+        <a href="{geturl project=$proj}" class="list {if $currentcategory != ''}indent{/if}"><span>{$proj->GetProject()}</span></a>
+        {else}
+        <span {if $currentcategory != ''}class="indent"{/if}>{$proj->GetProject()}</span>
+        {/if}
       </td>
-      <td class="projectDescription"><a href="{geturl project=$proj}" class="list">{$proj->GetDescription()}</a></td>
+      <td class="projectDescription">
+        {if !$loginenabled || $proj->UserCanAccess($loggedinuser)}
+        <a href="{geturl project=$proj}" class="list"><span>{$proj->GetDescription()|escape}</span></a>
+        {else}
+        <span>{$proj->GetDescription()|escape}</span>
+        {/if}
+      </td>
+
       {assign var=projecthead value=$proj->GetHeadCommit()}
       <td class="projectAge">
         {if $projecthead}
-          {if $proj->GetAge() <= 0}
-            <em class="empty">{t}No commits{/t}</em>
-          {elseif $proj->GetAge() < 7200}   {* 60*60*2, or 2 hours *}
-            <span class="agehighlight"><strong><em>{agestring age=$proj->GetAge()}</em></strong></span>
+          {if $proj->GetAge() < 7200}   {* 60*60*2, or 2 hours *}
+            <span class="agehighlight"><strong><em><time datetime="{$proj->GetEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{agestring age=$proj->GetAge()}</time></em></strong></span>
           {elseif $proj->GetAge() < 172800}   {* 60*60*24*2, or 2 days *}
-            <span class="agehighlight"><em>{agestring age=$proj->GetAge()}</em></span>
+            <span class="agehighlight"><em><time datetime="{$proj->GetEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{agestring age=$proj->GetAge()}</time></em></span>
           {else}
-            <em>{agestring age=$proj->GetAge()}</em>
+            <em><time datetime="{$proj->GetEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{agestring age=$proj->GetAge()}</time></em>
           {/if}
-        {else}
-            <em class="empty">{t}No commits{/t}</em>
-        {/if}
+	{else}
+	  <em class="empty">{t}No commits{/t}</em>
+	{/if}
       </td>
       {if $show_branch }
         {if $proj->repoTag == ''}
@@ -116,17 +121,18 @@ git source code archive
       <td class="projectBranch"><em>{$proj->repoTag|escape:'html'}</em></td>
         {/if}
       {/if}
-      {if $show_owner }
-      <td class="projectOwner"><em>{$proj->GetOwner()|escape:'html'}</em></td>
-      {/if}
+	  <td class="projectOwner"><em>{$proj->GetOwner()|escape:'html'}</em></td>
       <td class="link">
+        {if !$loginenabled || $proj->UserCanAccess($loggedinuser)}
         <a href="{geturl project=$proj}">{t}summary{/t}</a>
-{if $projecthead}
-      | <a href="{geturl project=$proj action=shortlog}">{t}shortlog{/t}</a>
-      | <a href="{geturl project=$proj action=log}">{t}log{/t}</a>
-      | <a href="{geturl project=$proj action=tree}">{t}tree{/t}</a>
-      | <a href="{geturl project=$proj action=snapshot hash=HEAD}" class="snapshotTip">{t}snapshot{/t}</a>
-{/if}
+	{if $projecthead}
+	| 
+	<a href="{geturl project=$proj action=shortlog}">{t}shortlog{/t}</a> | 
+	<a href="{geturl project=$proj action=log}">{t}log{/t}</a> | 
+	<a href="{geturl project=$proj action=tree}">{t}tree{/t}</a> | 
+	<a href="{geturl project=$proj action=snapshot hash=HEAD}" class="snapshotTip">{t}snapshot{/t}</a>
+	{/if}
+        {/if}
       </td>
     </tr>
   {foreachelse}
@@ -142,7 +148,6 @@ git source code archive
 {/block}
 
 {block name=footer}
-  <a href="{geturl action=opml}" class="rss_logo">{t}OPML{/t}</a>
-  <a href="{geturl action=projectindex}" class="rss_logo">{t}TXT{/t}</a>
+
 {/block}
 

@@ -10,18 +10,25 @@
 class GitPHP_CommitSearch extends GitPHP_RevList
 {
 	/**
-	 * Search types constants
+	 * Commit search type
+	 *
+	 * @var int
 	 */
 	const CommitType = 1;
-	const AuthorType = 2;
-	const CommitterType = 3;
 
 	/**
-	 * Standard style constants
+	 * Author search type
+	 *
+	 * @var int
 	 */
-	const SEARCH_COMMIT = 1;
-	const SEARCH_AUTHOR = 2;
-	const SEARCH_COMMITTER = 3;
+	const AuthorType = 2;
+
+	/**
+	 * Committer search type
+	 *
+	 * @var int
+	 */
+	const CommitterType = 3;
 
 	/**
 	 * Stores the search type
@@ -43,6 +50,13 @@ class GitPHP_CommitSearch extends GitPHP_RevList
 	 * @var GitPHP_GitExe
 	 */
 	protected $exe;
+
+	/**
+	 * Load strategy
+	 *
+	 * @var GitPHP_RevList_Git
+	 */
+	protected $strategy;
 
 	/**
 	 * Constructor
@@ -71,6 +85,7 @@ class GitPHP_CommitSearch extends GitPHP_RevList
 		$this->search = $search;
 
 		$this->exe = $exe;
+		$this->strategy = new GitPHP_RevList_Git($exe);
 	}
 
 	/**
@@ -144,22 +159,18 @@ class GitPHP_CommitSearch extends GitPHP_RevList
 			$args[] = '--regexp-ignore-case';
 
 		switch ($this->type) {
-			case self::SEARCH_COMMIT:
-				// if we search a commit hash, dont use grep
-				if (preg_match('/^([0-9a-f]{7,40})$/', $this->search, $regs))
-					$this->SetLimit(1);
-				else
-					$args[] = '--grep="' . addslashes($this->search) . '"';
+			case GitPHP_CommitSearch::CommitType:
+				$args[] = '--grep="' . addslashes($this->search) . '"';
 				break;
-			case self::SEARCH_AUTHOR:
+			case GitPHP_CommitSearch::AuthorType:
 				$args[] = '--author="' . addslashes($this->search) . '"';
 				break;
-			case self::SEARCH_COMMITTER:
+			case GitPHP_CommitSearch::CommitterType:
 				$args[] = '--committer="' . addslashes($this->search) . '"';
 				break;
 		}
 
-		$this->hashList = $this->RevList($args);
+		$this->hashList = $this->strategy->RevList($this->project, $this->hash, $this->limit, $this->skip, $args);
 	}
 
 }

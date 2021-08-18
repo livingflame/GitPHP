@@ -1,5 +1,5 @@
 <?php
-/**
+/** 
  * Custom exception when a user attempts to move outside the project root
  *
  * @author Christopher Han <xiphux@gmail.com>

@@ -15,10 +15,12 @@ class GitPHP_Controller_GraphData extends GitPHP_ControllerBase
 	public function Initialize()
 	{
 		parent::Initialize();
-
+		
 		if (!$this->config->GetValue('graphs')) {
 			throw new Exception('Graphing has been disabled');
 		}
+		
+		if (empty($this->params['hash'])){$this->params['hash'] = 'HEAD';}
 
 		$this->preserveWhitespace = true;
 		$this->DisableLogging();
@@ -69,55 +71,80 @@ class GitPHP_Controller_GraphData extends GitPHP_ControllerBase
 	protected function LoadData()
 	{
 		$head = $this->GetProject()->GetHeadCommit();
-
-		$data = null;
+		$data = array();
 
 		if ($this->params['graphtype'] == 'commitactivity') {
-
-			$data = array();
-
-			$commits = explode("\n", $this->exe->Execute($this->GetProject()->GetPath(), 'rev-list', array('--format=format:"%H %ct"', $head->GetHash())));
+			$commits = $this->exe->Execute($this->GetProject()->GetPath(), 'rev-list', array('--format=format:"%H %ct"', $head->GetHash()));
 			foreach ($commits as $commit) {
 				if (preg_match('/^([0-9a-fA-F]{40}) ([0-9]+)$/', $commit, $regs)) {
 					$data[] = array('CommitEpoch' => (int)$regs[2]);
 				}
 			}
-
 		} else if ($this->params['graphtype'] == 'languagedist') {
-
-			$data = array();
-
-			include_once(GITPHP_GESHIDIR . "geshi.php");
-			//include_once(GitPHP_Util::AddSlash($this->config->GetValue('geshiroot', GITPHP_GESHIDIR)) . "geshi.php");
-			$geshi = new GeSHi("",'php');
-
-			$files = explode("\n", $this->exe->Execute($this->GetProject()->GetPath(), 'ls-tree', array('-r', '--name-only', $head->GetTree()->GetHash())));
+			$files = $this->exe->Execute($this->GetProject()->GetPath(), 'ls-tree', array('-r', '--name-only', $head->GetTree()->GetHash()));
 
 			foreach ($files as $file) {
 				$filename = GitPHP_Util::BaseName($file);
-
-				$lang = GitPHP_Util::GeshiFilenameToLanguage($filename);
-				if (empty($lang)) {
-					$lang = $geshi->get_language_name_from_extension(substr(strrchr($filename, '.'), 1));
-					if (empty($lang)) {
-						$lang = 'Other';
-					}
-				}
-
-				if (!empty($lang) && ($lang !== 'Other')) {
-
-					/* if you have a bug here, check the "match the langname" regexp */
-					$fulllang = $geshi->get_language_fullname($lang);
-					if (!empty($fulllang))
-						$lang = $fulllang;
-				}
+                $file_mime = $this->GetProject()->GetObjectManager()->getFileMime($filename);
+				$ace_mode = $file_mime->getAceModeForPath();
+				if($ace_mode !== null){
+					$lang = $ace_mode['name'];
+				} else {
+                    $lang = 'Other';
+                }
 
 				if (isset($data[$lang])) {
 					$data[$lang]++;
 				} else {
 					$data[$lang] = 1;
 				}
+			}
 
+		} else if ($this->params['graphtype'] == 'contributors') {
+			$arr = array();
+			$arr[] = '--pretty=format:"%aN||%aE"';
+			$arr[] = $this->params['hash'];
+			$logs = $this->exe->Execute($this->GetProject()->GetPath(), 'log', $arr);
+			$logs = array_count_values($logs);
+			arsort($logs);
+
+			foreach ($logs as $user => $count) {
+				$user = explode('||', $user);
+				$data[] = array('name' => $user[0], 'email' => $user[1], 'commits' => $count);
+			}
+
+		}else if ($this->params['graphtype'] == 'branching') {
+			$arr = array();
+			$arr[] = '--graph';
+			$arr[] = '--date-order';
+			$arr[] = '--all';
+			$arr[] = '-C';
+			$arr[] = '-M';
+			$arr[] = '-n';
+			$arr[] = '100';
+			$arr[] = '--date=iso';
+			$arr[] = '--pretty=format:"B[%d] C[%H] D[%ad] A[%an] E[%ae] H[%h] S[%s]"';
+			$rawRows = $this->exe->Execute($this->GetProject()->GetPath(), 'log', $arr);
+
+			foreach ($rawRows as $row) {
+				if (preg_match("/^(.+?)(\s(B\[(.*?)\])? C\[(.+?)\] D\[(.+?)\] A\[(.+?)\] E\[(.+?)\] H\[(.+?)\] S\[(.+?)\])?$/", $row, $output)) {
+					if (!isset($output[4])) {
+						$data[] = array(
+							'relation' => $output[1],
+						);
+						continue;
+					}
+					$data[] = array(
+						'relation' => $output[1],
+						'branch' => $output[4],
+						'rev' => $output[5],
+						'date' => $output[6],
+						'author' => $output[7],
+						'author_email' => $output[8],
+						'short_rev' => $output[9],
+						'subject' => preg_replace('/(^|\s)(#[[:xdigit:]]+)(\s|$)/', '$1<a href="$2">$2</a>$3', $output[10]),
+					);
+				}
 			}
 		}
 

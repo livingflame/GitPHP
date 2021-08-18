@@ -5,18 +5,13 @@
  *
  *  Copyright (C) 2010 Christopher Han <xiphux@gmail.com>
  *}
-<div class="commit_tip">
-<nobr>{t}author{/t}: {$commit->GetAuthor()} ({$commit->GetAuthorEpoch()|date_format:"%Y-%m-%d %H:%M:%S"})
-</nobr>
+<div>
+{t}author{/t}: {$commit->GetAuthorName()} (<time datetime="{$commit->GetAuthorEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{$commit->GetAuthorEpoch()|date_format:"%Y-%m-%d %H:%M:%S"}</time>)
 <br />
-<nobr>
-{t}committer{/t}: {$commit->GetCommitter()} ({$commit->GetCommitterEpoch()|date_format:"%Y-%m-%d %H:%M:%S"})
-</nobr>
+{t}committer{/t}: {$commit->GetCommitterName()} (<time datetime="{$commit->GetCommitterEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{$commit->GetCommitterEpoch()|date_format:"%Y-%m-%d %H:%M:%S"}</time>)
 <br /><br />
 {foreach from=$commit->GetComment() item=line}
-{if strstr(trim($line),'-by: ') || strstr(trim($line),'Cc: ')}
-<span class="signedOffBy">{$line|escape}</span>
-{elseif strncasecmp(trim($line),'Change-Id:',10) == 0}
+{if strncasecmp(trim($line),'Signed-off-by:',14) == 0}
 <span class="signedOffBy">{$line|escape}</span>
 {else}
 {$line|escape}

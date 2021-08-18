@@ -12,7 +12,7 @@ msgstr ""
 "PO-Revision-Date: 2011-04-12 17:28+0800\n"
 "Last-Translator: seefan <seefan@jianel.net>\n"
 "Language-Team: Chinese (家内网) <service@jianel.net>\n"
-"Language: zh\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -429,8 +429,8 @@ msgstr "错误的搜索类型"
 # %1$s: the user's search string
 #: include/controller/Controller_Search.class.php:168
 #, php-format
-msgid "No matches for \"%1$s\""
-msgstr "与找到与 \"%1$s\" 匹配的项目"
+msgid "No matches for \"%1\""
+msgstr "与找到与 \"%1\" 匹配的项目"
 
 # A type of filesystem object stored in a project
 #: include/git/Blob.class.php:162
@@ -678,7 +678,7 @@ msgstr ""
 # %2$s: the filename of the second file
 #: include/git/FileDiff.class.php:810
 #, php-format
-msgid "Binary files %1$s and %2$s differ"
+msgid "Binary files %1 and %2 differ"
 msgstr ""
 
 # Used to label the url of the website of the project

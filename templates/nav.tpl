@@ -36,7 +36,7 @@
    {if $current=='commitdiff' || !$commit}
      {t}commitdiff{/t}
    {else}
-     <a href="{geturl project=$project action=commitdiff hash=$commit file=$file}">{t}commitdiff{/t}</a>
+     <a href="{geturl project=$project action=commitdiff hash=$commit}">{t}commitdiff{/t}</a>
    {/if}
    | 
    {if $current=='tree' || !$commit}
@@ -44,11 +44,11 @@
    {else}
      <a href="{geturl project=$project action=tree hashbase=$treecommit hash=$tree}">{t}tree{/t}</a>
    {/if}
-{if $enablegraphs}
-   |
+   | 
    {if $current=='graph' || !$commit}
      {t}graph{/t}
    {else}
      <a href="{geturl project=$project action=graph}">{t}graph{/t}</a>
    {/if}
-{/if}
+  <a href="{geturl project=$project action=rss}" class="rss_logo"><i class="fa fa-rss"></i> RSS</a>
+  <a href="{geturl project=$project action=atom}" class="rss_logo"><i class="fa fa-atom"></i> ATOM</a>

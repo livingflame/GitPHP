@@ -41,7 +41,7 @@
    {/if}
  </div>
 
- {include file='title.tpl' target='summary'}
+ {include file='title.tpl' target='heads'}
 
  {include file='headlist.tpl'}
 

@@ -13,9 +13,9 @@ define(["jquery", "modules/geturl", "modules/getproject", 'modules/resources'],
 	function($, url, project, resources) {
 
 		function getCommitHash(element) {
-			var hash = element.attr('href').match(/h=([0-9a-fA-F]{7,40}|HEAD)/);
+			var hash = element.attr('href').match(/h=([0-9a-fA-F]{4,40}|HEAD)/);
 			if (!hash) {
-				hash = element.attr('href').match(/\/commits\/([0-9a-fA-F]{7,40}|HEAD)/);
+				hash = element.attr('href').match(/\/commits\/([0-9a-fA-F]{4,40}|HEAD)/);
 			}
 			return hash ? hash[1] : null;
 		}
@@ -36,19 +36,16 @@ define(["jquery", "modules/geturl", "modules/getproject", 'modules/resources'],
 					}
 				},
 				style: {
-					classes: 'ui-tooltip-gitphp qtip-light qtip-shadow'
+					classes: 'ui-tooltip-gitphp ui-tooltip-light ui-tooltip-shadow'
 				},
 				position: {
-					adjust: {
-						screen: true
-					},
 					viewport: $(window)
 				}
 			}
 		}
 
 		return function(elements) {
-
+			
 			if (elements && (elements.size() > 0)) {
 				require(['qtip'], function() {
 					elements.each(function(){

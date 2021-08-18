@@ -26,17 +26,18 @@
 {/block}
 
 {block name=header}
-  <a href="{geturl}">{if $homelink}{$homelink}{else}{t}projects{/t}{/if}</a> /
+  <a href="{geturl}">{if $homelink}{$homelink}{else}{t}projects{/t}{/if}</a> / 
   <a href="{geturl project=$project}">{$project->GetProject()}</a>
-  {if $actionlocal}
-     / {$actionlocal}
-  {/if}
+  {if $actionlocal} / {$actionlocal}{/if}
   {if $enablesearch}
-    <form method="get" action="{geturl project=$project action=search hash=$commit}" enctype="application/x-www-form-urlencoded">
+    
       <div class="search">
-        <input type="hidden" name="p" value="{$project->GetProject()}" />
+	  <form method="get" action="{geturl project=$project action=search hash=$commit}" enctype="application/x-www-form-urlencoded">
+        {if !$router->GetCleanUrl()}
+	<input type="hidden" name="p" value="{$project->GetProject()}" />
         <input type="hidden" name="a" value="search" />
         <input type ="hidden" name="h" value="{if $commit}{$commit->GetHash()}{else}HEAD{/if}" />
+	{/if}
         <select name="st">
           <option {if $searchtype == 'commit'}selected="selected"{/if} value="commit">{t}commit{/t}</option>
           <option {if $searchtype == 'author'}selected="selected"{/if} value="author">{t}author{/t}</option>
@@ -45,20 +46,7 @@
             <option {if $searchtype == 'file'}selected="selected"{/if} value="file">{t}file{/t}</option>
           {/if}
         </select> {t}search{/t}: <input type="search" name="s" {if $search}value="{$search}"{/if} />
+		</form>
       </div>
-    </form>
   {/if}
-{/block}
-
-{block name=footer}
-  <div class="page_footer_text">
-  {if $project->GetWebsite()}
-  <a href="{$project->GetWebsite()}">{$project->GetDescription()|escape}</a>
-  {else}
-  {$project->GetDescription()|escape}
-  {/if}
-  </div>
-  <a href="{geturl project=$project action=rss}" class="rss_logo">{t}RSS{/t}</a>
-  <a href="{geturl project=$project action=atom}" class="rss_logo">{t}Atom{/t}</a>
-  <span class="timestamp">{time()|date_format:"%a, %d %b %Y %H:%M"} {date('T')}</span>
 {/block}

@@ -12,60 +12,70 @@ class GitPHP_Tag extends GitPHP_Ref implements GitPHP_Observable_Interface, GitP
 	
 	/**
 	 * Whether data for this tag has been read
+	 *
 	 * @var boolean
 	 */
 	protected $dataRead = false;
 
 	/**
 	 * The identifier for the tagged object
+	 *
 	 * @var string
 	 */
 	protected $object;
 
 	/**
 	 * The commit hash
+	 *
 	 * @var string
 	 */
 	protected $commitHash;
 
 	/**
 	 * The tagged object type
+	 *
 	 * @var string
 	 */
 	protected $type;
 
 	/**
 	 * The tagger
+	 *
 	 * @var string
 	 */
 	protected $tagger;
 
 	/**
 	 * The tagger epoch
+	 *
 	 * @var string
 	 */
 	protected $taggerEpoch;
 
 	/**
 	 * The tagger timezone
+	 *
 	 * @var string
 	 */
 	protected $taggerTimezone;
 
 	/**
 	 * The tag comment
+	 *
 	 * @var string
 	 */
 	protected $comment = array();
 
 	/**
 	 * Observers
+	 *
 	 * @var array
 	 */
 	protected $observers = array();
 
 	/**
 	 * Data load strategy
+	 *
 	 * @var GitPHP_TagLoadStrategy_Interface
 	 */
 	protected $strategy;
@@ -143,7 +153,6 @@ class GitPHP_Tag extends GitPHP_Ref implements GitPHP_Observable_Interface, GitP
 	public function GetCommit()
 	{
 		$hash = $this->GetCommitHash();
-
 		if ($hash)
 			return $this->GetProject()->GetCommit($hash);
 
@@ -153,7 +162,7 @@ class GitPHP_Tag extends GitPHP_Ref implements GitPHP_Observable_Interface, GitP
 	/**
 	 * Gets the hash of the commit this tag points to
 	 *
-	 * @return string commit hash for this tag (or null)
+	 * @return string commit hash for this tag
 	 */
 	public function GetCommitHash()
 	{
@@ -167,8 +176,6 @@ class GitPHP_Tag extends GitPHP_Ref implements GitPHP_Observable_Interface, GitP
 					$this->commitHash = $this->object;
 				} else if ($this->type == 'tag') {
 					$tag = $this->GetProject()->GetTagList()->GetTag($this->object);
-					if (!$tag)
-						return null;
 					$this->commitHash = $tag->GetCommitHash();
 				}
 			}
@@ -419,13 +426,10 @@ class GitPHP_Tag extends GitPHP_Ref implements GitPHP_Observable_Interface, GitP
 		if (!$this->dataRead)
 			$this->ReadData();
 
-		if ($this->LightTag()) {
-			$commit = $this->GetCommit();
-			if (!empty($commit))
-				return $commit->GetCommitterEpoch();
-		}
-
-		return $this->taggerEpoch;
+		if ($this->LightTag())
+			return $this->GetCommit()->GetCommitterEpoch();
+		else
+			return $this->taggerEpoch;
 	}
 
 	/**
@@ -474,15 +478,12 @@ class GitPHP_Tag extends GitPHP_Ref implements GitPHP_Observable_Interface, GitP
 	/**
 	 * Generates a tag cache key
 	 *
-	 * @param string|GitPHP_Project $proj project
+	 * @param string $proj project
 	 * @param string $tag tag name
 	 * @return string cache key
 	 */
 	public static function CacheKey($proj, $tag)
 	{
-		if (is_object($proj))
-			return 'project|' . $proj->GetProject() . '|tag|' . $tag;
-
 		return 'project|' . $proj . '|tag|' . $tag;
 	}
 

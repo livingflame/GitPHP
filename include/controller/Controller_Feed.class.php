@@ -1,6 +1,6 @@
 <?php
 /**
- * Controller to display a project's feed
+ * Controller for displaying a project's feed
  *
  * @author Christopher Han <xiphux@gmail.com>
  * @author Christian Weiske <cweiske@cweiske.de>
@@ -11,18 +11,25 @@
 class GitPHP_Controller_Feed extends GitPHP_ControllerBase
 {
 	/**
-	 * Constant for the number of items to load into the feed
+	 * Number of items to put in feed
+	 *
+	 * @var int
 	 */
-	const MAX_FEED_ITEMS = 150;
+	const FeedItemCount = 100;
 
 	/**
-	 * Constants for the different feed formats
+	 * Rss feed format
+	 *
+	 * @var string
 	 */
 	const RssFormat = 'rss';
-	const AtomFormat = 'atom';
 
-	const FEED_FORMAT_RSS = 'rss';
-	const FEED_FORMAT_ATOM = 'atom';
+	/**
+	 * Atom feed format
+	 *
+	 * @var string
+	 */
+	const AtomFormat = 'atom';
 
 	/**
 	 * Initialize controller
@@ -41,9 +48,9 @@ class GitPHP_Controller_Feed extends GitPHP_ControllerBase
 	 */
 	protected function GetTemplate()
 	{
-		if ($this->params['format'] == self::FEED_FORMAT_RSS)
+		if ($this->params['format'] == GitPHP_Controller_Feed::RssFormat)
 			return 'rss.tpl';
-		else if ($this->params['format'] == self::FEED_FORMAT_ATOM)
+		else if ($this->params['format'] == GitPHP_Controller_Feed::AtomFormat)
 			return 'atom.tpl';
 	}
 
@@ -65,12 +72,12 @@ class GitPHP_Controller_Feed extends GitPHP_ControllerBase
 	 */
 	public function GetName($local = false)
 	{
-		if ($this->params['format'] == self::FEED_FORMAT_RSS) {
+		if ($this->params['format'] == GitPHP_Controller_Feed::RssFormat) {
 			if ($local && $this->resource)
 				return $this->resource->translate('rss');
 			else
 				return 'rss';
-		} else if ($this->params['format'] == self::FEED_FORMAT_ATOM) {
+		} else if ($this->params['format'] == GitPHP_Controller_Feed::AtomFormat) {
 			if ($local && $this->resource)
 				return $this->resource->translate('atom');
 			else
@@ -87,9 +94,9 @@ class GitPHP_Controller_Feed extends GitPHP_ControllerBase
 			throw new Exception('A feed format is required');
 		}
 
-		if ($this->params['format'] == self::FEED_FORMAT_RSS) {
+		if ($this->params['format'] == GitPHP_Controller_Feed::RssFormat) {
 			$this->headers[] = "Content-type: application/rss+xml; charset=UTF-8";
-		} else if ($this->params['format'] == self::FEED_FORMAT_ATOM) {
+		} else if ($this->params['format'] == GitPHP_Controller_Feed::AtomFormat) {
 			$this->headers[] = "Content-type: application/atom+xml; charset=UTF-8";
 		}
 	}
@@ -99,11 +106,17 @@ class GitPHP_Controller_Feed extends GitPHP_ControllerBase
 	 */
 	protected function LoadData()
 	{
-		$log = new GitPHP_GitLog($this->GetProject(), $this->GetProject()->GetHeadCommit(), self::MAX_FEED_ITEMS);
+		$compat = $this->GetProject()->GetCompat();
+		$strategy = null;
+		//if ($compat) {
+			$strategy = new GitPHP_LogLoad_Git($this->exe);
+		//} else {
+		//	$strategy = new GitPHP_LogLoad_Raw();
+		//}
+		$log = new GitPHP_Log($this->GetProject(), $this->GetProject()->GetHeadCommit(), $strategy, GitPHP_Controller_Feed::FeedItemCount);
 		if ($this->config->HasKey('feedfilter')) {
 			$log->FilterCommits($this->config->GetValue('feedfilter'));
 		}
-		// Don't show commits older than 48 hours, but show a minimum of 20 entries
 		$log->FilterOldCommits(48*60*60, 20);
 
 		$this->tpl->assign('log', $log);

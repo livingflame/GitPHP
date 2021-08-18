@@ -1,7 +1,5 @@
 <?php
 /**
- * GitPHP AutoLoader (backport)
- *
  * Class to handle autoloading other classes
  *
  * @author Christopher Han <xiphux@gmail.com>
@@ -22,14 +20,14 @@ class GitPHP_AutoLoader
 		if (empty($filename))
 			return;
 
-		$path = __DIR__ . '/' . $filename;
+		$path = dirname(__FILE__) . '/' . $filename;
 
 		if (is_readable($path))
 			require($path);
 	}
 
 	/**
-	 * Gets the path a class
+	 * Get the path to a class
 	 *
 	 * @param string $classname class name
 	 * @return string path
@@ -51,22 +49,44 @@ class GitPHP_AutoLoader
 			$path = 'git/projectlist/';
 		} else if (strncmp($classname, 'FileMimeType', 12) === 0) {
 			$path = 'git/filemimetype/';
+		} else if (strncmp($classname, 'RefList', 7) === 0) {
+			$path = 'git/reflist/';
+		} else if (strncmp($classname, 'TagList', 7) === 0) {
+			$path = 'git/taglist/';
+		} else if (strncmp($classname, 'RemoteList', 10) === 0) {
+			$path = 'git/remotelist/';
+		} else if (strncmp($classname, 'HeadList', 8) === 0) {
+			$path = 'git/headlist/';
+		} else if (strncmp($classname, 'RevList', 7) === 0) {
+			$path = 'git/revlist/';
+		} else if (($classname == 'Project') || (strncmp($classname, 'ProjectLoad', 11) === 0)) {
+			$path = 'git/project/';
 		} else if (($classname == 'Blob') || (strncmp($classname, 'BlobLoad', 8) === 0)) {
 			$path = 'git/blob/';
+		} else if (($classname == 'Commit') || (strncmp($classname, 'CommitLoad', 10) === 0)) {
+			$path = 'git/commit/';
 		} else if (($classname == 'Tag') || (strncmp($classname, 'TagLoad', 7) === 0)) {
 			$path = 'git/tag/';
+		} else if (($classname == 'Tree') || (strncmp($classname, 'TreeLoad', 8) === 0)) {
+			$path = 'git/tree/';
+		} else if (($classname == 'Log') || (strncmp($classname, 'LogLoad', 7) === 0)) {
+			$path = 'git/log/';
 		} else if (strncmp($classname, 'Archive', 7) === 0) {
 			$path = 'git/archive/';
+		} else if (strncmp($classname, 'Pack', 4) === 0) {
+			$path = 'git/pack/';
 		} else if ((strlen($classname) > 9) && (substr_compare($classname, 'Exception', -9, 9) === 0)) {
 			$path = 'exception/';
 		} else if (strpos($classname, 'Cache') !== false) {
 			$path = 'cache/';
 		} else if (strncmp($classname, 'Route', 5) === 0) {
 			$path = 'router/';
+		} else if (strncmp($classname, 'User', 4) === 0) {
+			$path = 'auth/';
 		} else if (in_array($classname, array(
+				'Mime',
 				'Config',
 				'DebugLog',
-				'Mime',
 				'Resource',
 				'Util'
 			))) {

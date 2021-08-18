@@ -11,7 +11,3 @@ E: xiphux@gmail.com
 W: http://www.gitphp.org
 W: http://www.xiphux.com
 D: Original implementation and lead developer
-
-N: Tanguy Pruvot
-W: http://github.com/tpruvot/GitPHP
-D: github project, allow non-bare folders tracking, android repo browsing, enhanced sidebyside

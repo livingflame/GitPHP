@@ -9,6 +9,7 @@
  */
 class GitPHP_Controller_Heads extends GitPHP_ControllerBase
 {
+
 	/**
 	 * Initialize controller
 	 */

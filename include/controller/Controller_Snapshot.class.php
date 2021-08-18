@@ -12,18 +12,21 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 
 	/**
 	 * Stores the archive object
+	 *
 	 * @var GitPHP_Archive
 	 */
 	private $archive = null;
 
 	/**
 	 * Snapshot cache directory
+	 *
 	 * @var string
 	 */
 	private $cacheDir = null;
 
 	/**
 	 * Snapshot cached file path
+	 *
 	 * @var string
 	 */
 	private $cachedFile;
@@ -35,14 +38,21 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 	{
 		$this->InitializeConfig();
 
+		$this->InitializeUserList();
+
 		$this->InitializeGitExe();
 
 		$this->InitializeProjectList();
 
 		if (isset($this->params['project'])) {
-			$project = $this->projectList->GetProject(str_replace(chr(0), '', $this->params['project']));
+			$project = $this->projectList->GetProject($this->params['project']);
 			if (!$project) {
 				throw new GitPHP_InvalidProjectParameterException($this->params['project']);
+			}
+			if ($this->userList && ($this->userList->GetCount() > 0)) {
+				if (!$project->UserCanAccess((!empty($_SESSION['gitphpuser']) ? $_SESSION['gitphpuser'] : null))) {
+					throw new GitPHP_UnauthorizedProjectException($this->params['project']);
+				}
 			}
 			$this->project = $project->GetProject();
 		}
@@ -56,24 +66,22 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 		if (empty($this->params['format']))
 			$this->params['format'] = $this->config->GetValue('compressformat');
 
-		$this->InitializeArchive();
+		
+		$this->cacheDir = GITPHP_CACHEDIR . 'snapshots/';
 
-		if ($this->config->GetValue('cache')) {
-
-			$this->cacheDir = GITPHP_CACHEDIR . 'snapshots/';
-
-			if (file_exists($this->cacheDir)) {
-				if (GitPHP_Util::IsDir($this->cacheDir)) {
-					throw new Exception($this->cacheDir . ' exists but is not a directory');
-				} else if (!is_writable($this->cacheDir)) {
-					throw new Exception($this->cacheDir . ' is not writable');
-				}
-			} else {
-				if (!mkdir($this->cacheDir, 0775))
-					throw new Exception($this->cacheDir . ' could not be created');
-				@ chmod($this->cacheDir, 0775);
+		if (file_exists($this->cacheDir)) {
+			if (!is_dir($this->cacheDir)) {
+				throw new Exception($this->cacheDir . ' exists but is not a directory');
+			} else if (!is_writable($this->cacheDir)) {
+				throw new Exception($this->cacheDir . ' is not writable');
 			}
+		} else {
+			if (!mkdir($this->cacheDir, 0777,true))
+				throw new Exception($this->cacheDir . ' could not be created');
+			chmod($this->cacheDir, 0777);
 		}
+		
+		$this->InitializeArchive();
 	}
 
 	/**
@@ -114,49 +122,19 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 	 */
 	protected function LoadHeaders()
 	{
-		$strategy = null;
-		$this->exe = GitPHP_GitExe::GetInstance();
-		if ($this->params['format'] == GITPHP_COMPRESS_TAR) {
-			$strategy = new GitPHP_Archive_Tar();
-		} else if ($this->params['format'] == GITPHP_COMPRESS_BZ2) {
-			$strategy = new GitPHP_Archive_Bzip2($this->config->GetValue('compresslevel'));
-			if (!$strategy->Valid())
-				$strategy = new GitPHP_Archive_Tar();
-		} else if ($this->params['format'] == GITPHP_COMPRESS_GZ) {
-			$strategy = new GitPHP_Archive_Gzip($this->config->GetValue('compresslevel'));
-			if (!$strategy->Valid())
-				$strategy = new GitPHP_Archive_Tar();
-		} else if ($this->params['format'] == GITPHP_COMPRESS_ZIP) {
-			$strategy = new GitPHP_Archive_Zip($this->config->GetValue('compresslevel'));
-			if (!$strategy->Valid())
-				$strategy = new GitPHP_Archive_Tar();
-		}
-		$strategy->SetExe(GitPHP_GitExe::GetInstance());
-
-		$this->archive = new GitPHP_Archive($this->GetProject(), null, $strategy, (isset($this->params['file']) ? $this->params['file'] : ''), (isset($this->params['prefix']) ? $this->params['prefix'] : ''));
-		$commit = null;
-
-		if (!isset($this->params['hash']))
-			$commit = $this->GetProject()->GetHeadCommit();
-		else
-			$commit = $this->GetProject()->GetCommit($this->params['hash']);
-
-		$this->archive->SetObject($commit);
-
 		$mimetype = $this->archive->GetMimeType();
+		
 		if (!empty($mimetype))
 			$this->headers[] = 'Content-Type: ' . $mimetype;
 
 		$this->headers[] = 'Content-Disposition: attachment; filename=' . $this->archive->GetFilename();
-
-		if ($this->config->GetValue('cache')) {
-			$cachedfile = $this->cacheDir . $this->CachedSnapshotFile();
-			if (is_readable($cachedfile)) {
-				$size = filesize($cachedfile);
-				if ($size !== false)
-					$this->headers[] = 'Content-Length: ' . $size;
-			}
+		$cachedfile = $this->cacheDir . $this->CachedSnapshotKey() . $this->archive->GetFilename();
+		if (is_readable($cachedfile)) {
+			$size = filesize($cachedfile);
+			if ($size !== false)
+				$this->headers[] = 'Content-Length: ' . $size;
 		}
+		
 	}
 
 	/**
@@ -171,63 +149,20 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 	 */
 	public function Render()
 	{
-
-		$cache = $this->config->GetValue('cache');
-		$cachedfile = null;
-		$cachehandle = null;
-
-		if ($cache && GitPHP_Util::IsDir($this->cacheDir)) {
-			$cachedfile = $this->CachedSnapshotFile();
-			$cachedfilepath = $this->cacheDir . $cachedfile;
-			if (is_readable($cachedfilepath)) {
-				// read cached file
-				$cachehandle = fopen($cachedfilepath, 'rb');
-				if ($cachehandle) {
-					while (!feof($cachehandle)) {
-						print fread($cachehandle, 1048576);
-						flush();
-					}
-					fclose($cachehandle);
-					return;
+		$this->archive->Open();
+		$file = GitPHP_Util::CleanPath($this->cacheDir . $this->CachedSnapshotKey() . $this->archive->GetFilename());
+		if(file_exists($file)){
+			$handle = @fopen($file, "r") or die("Couldn't get handle");
+			if ($handle) {
+				while (!feof($handle)) {
+					echo fgets($handle, 4096);
+					ob_flush();
+					flush();
 				}
+				fclose($handle);
 			}
 		}
 
-		if ($this->archive->Open()) {
-
-			$tmpcachefile = null;
-			$cachehandle = null;
-
-			if ($cache && !empty($cachedfile)) {
-				// write cached file too
-				$pid = 0;
-				if (function_exists('posix_getpid'))
-					$pid = posix_getpid();
-				else
-					$pid = rand();
-
-				$tmpcachefile = 'tmp-' . $pid . '-' . $cachedfile;
-				$cachehandle = fopen($this->cacheDir . $tmpcachefile, 'wb');
-			}
-
-			while (($data = $this->archive->Read()) !== false) {
-
-				print $data;
-				flush();
-
-				if ($cache && $cachehandle) {
-					fwrite($cachehandle, $data);
-				}
-
-			}
-			$this->archive->Close();
-
-			if ($cachehandle) {
-				fclose($cachehandle);
-				sleep(1);
-				rename($this->cacheDir . $tmpcachefile, $this->cacheDir . $cachedfile);
-			}
-		}
 	}
 
 	/**
@@ -238,10 +173,6 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 		$strategy = null;
 		if ($this->params['format'] == GITPHP_COMPRESS_TAR) {
 			$strategy = new GitPHP_Archive_Tar();
-		} else if ($this->params['format'] == GITPHP_COMPRESS_BZ2) {
-			$strategy = new GitPHP_Archive_Bzip2($this->config->GetValue('compresslevel'));
-			if (!$strategy->Valid())
-				$strategy = new GitPHP_Archive_Tar();
 		} else if ($this->params['format'] == GITPHP_COMPRESS_GZ) {
 			$strategy = new GitPHP_Archive_Gzip($this->config->GetValue('compresslevel'));
 			if (!$strategy->Valid())
@@ -253,13 +184,10 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 		}
 		$strategy->SetExe($this->exe);
 
-		$this->archive = new GitPHP_Archive($this->GetProject(), null,
-			$strategy,
-			(isset($this->params['file']) ? $this->params['file'] : ''),
-			(isset($this->params['prefix']) ? $this->params['prefix'] : '')
-		);
+		$this->archive = new GitPHP_Archive($this->GetProject(), null, $strategy);
+		$this->archive->SetPath(isset($this->params['file']) ? $this->params['file'] : '');
+		$this->archive->SetPrefix((isset($this->params['prefix']) ? $this->params['prefix'] : ''));
 
-		$commit = null;
 
 		if (!isset($this->params['hash']))
 			$commit = $this->GetProject()->GetHeadCommit();
@@ -267,6 +195,8 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 			$commit = $this->GetProject()->GetCommit($this->params['hash']);
 
 		$this->archive->SetObject($commit);
+		$this->archive->SetCacheDir(GitPHP_Util::CleanPath($this->cacheDir . $this->CachedSnapshotKey()));
+		$commit = null;
 	}
 
 	/**
@@ -274,11 +204,10 @@ class GitPHP_Controller_Snapshot extends GitPHP_ControllerBase
 	 *
 	 * @return string cached file name
 	 */
-	private function CachedSnapshotFile()
+	private function CachedSnapshotKey()
 	{
 		$key = ($this->archive->GetObject() ? $this->archive->GetObject()->GetHash() : '') . '|' . (isset($this->params['file']) ? $this->params['file'] : '') . '|' . (isset($this->params['prefix']) ? $this->params['prefix'] : '');
-		$cachefile = sha1($key) . '-' . $this->archive->GetFilename();
-		return $cachefile;
+		return sha1($key);
 	}
 
 }

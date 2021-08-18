@@ -1,6 +1,6 @@
 {*
  *  atom.tpl
- *  GitPHP: A PHP git repository browser
+ *  gitphp: A PHP git repository browser
  *  Component: Atom feed template
  *
  *  Copyright (C) 2010 Christian Weiske <cweiske@cweiske.de>
@@ -31,7 +31,7 @@
       <div xmlns="http://www.w3.org/1999/xhtml">
         <p>
         {foreach from=$logitem->GetComment() item=line}
-          {$line|htmlspecialchars}<br/>
+          {$line|htmlspecialchars}<br />
         {/foreach}
         </p>
         <ul>

@@ -7,32 +7,35 @@
  *}
 {extends file='projectbase.tpl'}
 
-{block name=main}
-
-{if $foldertree}
-  {assign var="f" value=$foldertree->GetPath()}
-{else}
-  {assign var="f" value=$blob->GetPath()}
+{block name=links append}
+{if $page > 0}
+<link rel="prev" href="{geturl project=$project action=history hash=$commit file=$blob->GetPath() page=$page-1}" />
 {/if}
+{if $hasmorehistory}
+<link rel="next" href="{geturl project=$project action=history hash=$commit file=$blob->GetPath() page=$page+1}" />
+{/if}
+{/block}
+
+{block name=main}
 
  {* Page header *}
  <div class="page_nav">
    {include file='nav.tpl' treecommit=$commit}
-   <br/>
+   <br />
    {if $page > 0}
-     <a href="{geturl project=$project action=history hash=$commit file=$f}">{t}first{/t}</a>
+     <a href="{geturl project=$project action=history hash=$commit file=$blob->GetPath()}">{t}first{/t}</a>
    {else}
      {t}first{/t}
    {/if}
    &sdot;
    {if $page > 0}
-     <a href="{geturl project=$project action=history hash=$commit file=$f page=$page-1}">{t}prev{/t}</a>
+     <a href="{geturl project=$project action=history hash=$commit file=$blob->GetPath() page=$page-1}">{t}prev{/t}</a>
    {else}
      {t}prev{/t}
    {/if}
    &sdot;
    {if $hasmorehistory}
-     <a href="{geturl project=$project action=history hash=$commit file=$f page=$page+1}">{t}next{/t}</a>
+     <a href="{geturl project=$project action=history hash=$commit file=$blob->GetPath() page=$page+1}">{t}next{/t}</a>
    {else}
      {t}next{/t}
    {/if}
@@ -66,8 +69,10 @@
        <td class="link">
          <a href="{geturl project=$project action=commit hash=$historycommit}">{t}commit{/t}</a>
        | <a href="{geturl project=$project action=commitdiff hash=$historycommit}">{t}commitdiff{/t}</a>
+	   | <a href="{geturl project=$project action=tree hash=$historycommit->GetTree() hashbase=$historycommit}">{t}tree{/t}</a>
      {if !$foldertree}
        | <a href="{geturl project=$project action=blob hashbase=$historycommit file=$f}">{t}blob{/t}</a>
+       | <a href="{geturl project=$project action=blob hashbase=$historycommit file=$f output=plain}">{t}plain{/t}</a>
        | <a href="{geturl project=$project action=blobdiff hash=$historyitem->GetToBlob() hashparent=$historyitem->GetFromBlob() file=$f hashbase=$historycommit}">{t}blobdiff{/t}</a>
        {if $blob->GetHash() != $historyitem->GetToHash()}
        | <a href="{geturl project=$project action=blobdiff hash=$blob hashparent=$historyitem->GetToBlob() file=$f hashbase=$historycommit}#D1">{t}diff to current{/t}</a>

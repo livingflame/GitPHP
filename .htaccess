@@ -1,0 +1,18 @@
+php_value memory_limit 528M
+php_value post_max_size 30M
+php_value upload_max_filesize 30M
+# 
+# Options +FollowSymLinks
+# 
+# Turn on the rewrite engine
+# RewriteEngine On
+# 
+# if you installed the script in a subdir use something like below
+# RewriteBase /subdirectory/
+# 
+# RewriteRule ^static/css/(.+)$ static/combine.php?files=$1 [L]
+# RewriteRule ^static/js/(.+)$ static/combine.php?files=$1 [L]
+# RewriteRule ^captcha/(.+)$ captcha.php?action=$1 [L]
+# 
+# RewriteCond $1 !^(index\.php|img\.php|captcha\.php|static|git|phpMyEdit|docs|audioplay|adminer\.php|favicon\.ico|robots\.txt|combine\.php)
+# RewriteRule ^(.*)$ index.php/$1

@@ -1,19 +1,59 @@
 <?php
+
 /**
- * Constants for git commands
+ * git cat-file constant
  */
 define('GIT_CAT_FILE','cat-file');
+
+/**
+ * git diff-tree constant
+ */
 define('GIT_DIFF_TREE','diff-tree');
+
+/**
+ * git ls-tree constant
+ */
 define('GIT_LS_TREE','ls-tree');
+
+/**
+ * git rev-list constant
+ */
 define('GIT_REV_LIST','rev-list');
+
+/**
+ * git rev-parse constant
+ */
 define('GIT_REV_PARSE','rev-parse');
+
+/**
+ * git show-ref constant
+ */
 define('GIT_SHOW_REF','show-ref');
+
+/**
+ * git archive constant
+ */
 define('GIT_ARCHIVE','archive');
+
+/**
+ * git grep constant
+ */
 define('GIT_GREP','grep');
+
+/**
+ * git blame constant
+ */
 define('GIT_BLAME','blame');
+
+/**
+ * git name-rev constant
+ */
 define('GIT_NAME_REV','name-rev');
+
+/**
+ * git for-each-ref constant
+ */
 define('GIT_FOR_EACH_REF','for-each-ref');
-define('GIT_CONFIG','config');
 
 /**
  * Class to wrap git executable
@@ -27,22 +67,23 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 {
 
 	/**
-	 * Stores the singleton instance
-	 */
-	protected static $instance;
-
-	/**
-	 * Stores the binary path internally
+	 * The binary path
+	 *
+	 * @var string
 	 */
 	protected $binary;
 	
 	/**
-	 * Stores the binary version internally
+	 * The binary version
+	 *
+	 * @var string
 	 */
 	protected $version;
 
 	/**
-	 * Stores whether the version has been read
+	 * Whether the version has been read
+	 *
+	 * @var boolean
 	 */
 	protected $versionRead = false;
 
@@ -50,7 +91,6 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	 * Prefix to set terminal LANG charset.
 	 */
 	protected $charset = 'en_US.utf-8';
-
 	/**
 	 * Observers
 	 *
@@ -59,26 +99,25 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	protected $observers = array();
 
 	/**
-	 * Returns the singleton instance
+	 * Whether the exec function is allowed by the install
 	 *
-	 * @return mixed instance of git exe classe
+	 * @var null|boolean
 	 */
-	public static function GetInstance()
-	{
-		if (!self::$instance) {
-			self::$instance = new GitPHP_GitExe(GitPHP_Config::GetInstance()->GetValue('gitbin'));
-			self::$instance->AddObserver(GitPHP_DebugLog::GetInstance());
-		}
-		return self::$instance;
-	}
+	protected $execAllowed = null;
 
 	/**
-	 * Releases the singleton instance
+	 * Whether the shell_exec function is allowed by the install
+	 *
+	 * @var null|boolean
 	 */
-	public static function DestroyInstance()
-	{
-		self::$instance = null;
-	}
+	protected $shellExecAllowed = null;
+
+	/**
+	 * Whether the popen function is allowed by the install
+	 *
+	 * @var null|boolean
+	 */
+	protected $popenAllowed = null;
 
 	/**
 	 * Constructor
@@ -87,9 +126,6 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	 */
 	public function __construct($binary = '')
 	{
-		if (empty($binary))
-			$binary = GitPHP_Config::GetInstance()->GetValue('gitbin');
-
 		if (empty($binary)) {
 			$binary = GitPHP_GitExe::DefaultBinary();
 		}
@@ -102,20 +138,50 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	 * @param string $projectPath path to project
 	 * @param string $command the command to execute
 	 * @param string[] $args arguments
-	 * @return string full executable string
+	 * @return string result of command
 	 */
 	public function Execute($projectPath, $command, $args)
 	{
+		if ($this->execAllowed === null) {
+			$this->execAllowed = GitPHP_Util::FunctionAllowed('exec');
+			if (!$this->execAllowed) {
+				throw new GitPHP_DisabledFunctionException('exec');
+			}
+		}
+
 		$fullCommand = $this->CreateCommand($projectPath, $command, $args);
-
+		file_put_contents( GITPHP_BASEDIR . 'logs.txt', $fullCommand . "\n", FILE_APPEND );
 		$this->Log('Begin executing "' . $fullCommand . '"');
+		$ret = exec($fullCommand,$output);
+		$ret = null;
+		$this->Log('Finish executing "' . $fullCommand . '"' .
+			"\nwith result: " . implode('\n',$output));
 
+		return $output;
+	}
+
+	/**
+	 * Executes a command
+	 *
+	 * @param string $projectPath path to project
+	 * @param string $command the command to execute
+	 * @param string[] $args arguments
+	 * @return string result of command
+	 */
+	public function ShellExecute($projectPath, $command, $args)
+	{
+		if ($this->shellExecAllowed === null) {
+			$this->shellExecAllowed = GitPHP_Util::FunctionAllowed('shell_exec');
+			if (!$this->shellExecAllowed) {
+				throw new GitPHP_DisabledFunctionException('shell_exec');
+			}
+		}
+
+		$fullCommand = $this->CreateCommand($projectPath, $command, $args);
+		file_put_contents( GITPHP_BASEDIR . 'logs.txt', $fullCommand . "\n", FILE_APPEND );
+		$this->Log('Begin executing "' . $fullCommand . '"');
 		$ret = shell_exec($fullCommand);
-
-		if ($command != GIT_DIFF_TREE) /* reduce noisy results */
-			$this->Log('Finish executing "' . $fullCommand . '"' .
-				"\nwith result: " . $ret);
-
+		$this->Log('Finish executing "' . $fullCommand . '"' . "\nwith result: " . $ret);
 		return $ret;
 	}
 
@@ -124,14 +190,17 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	 *
 	 * @param string $projectPath path to project
 	 * @param string $command the command to execute
-	 * @param array $args arguments
+	 * @param string[] $args arguments
+	 * @param string $mode process open mode
 	 * @return resource process handle
 	 */
-	public function Open($projectPath, $command, $args, $mode = 'r')
+	public function Open($projectPath, $command, $args, $mode = 'r+')
 	{
-		$fullCommand = $this->CreateCommand($projectPath, $command, $args);
-
-		return popen($fullCommand, $mode);
+		$string = implode("\n",$this->Execute($projectPath, $command, $args));
+		$stream = fopen('php://temp',$mode);
+		fwrite($stream, $string);
+		rewind($stream);
+		return $stream;
 	}
 
 	/**
@@ -157,7 +226,6 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 
 		return $command;
 	}
-
 	/**
 	 * Gets the binary for this executable
 	 *
@@ -186,6 +254,13 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	 */
 	protected function ReadVersion()
 	{
+		if ($this->shellExecAllowed === null) {
+			$this->shellExecAllowed = GitPHP_Util::FunctionAllowed('shell_exec');
+			if (!$this->shellExecAllowed) {
+				throw new GitPHP_DisabledFunctionException('shell_exec');
+			}
+		}
+
 		$this->versionRead = true;
 
 		$this->version = '';
@@ -270,11 +345,18 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	 */
 	public function Valid()
 	{
+		if ($this->execAllowed === null) {
+			$this->execAllowed = GitPHP_Util::FunctionAllowed('exec');
+			if (!$this->execAllowed) {
+				throw new GitPHP_DisabledFunctionException('exec');
+			}
+		}
+
 		if (empty($this->binary))
 			return false;
 
 		$code = 0;
-		exec($this->binary . ' --version', $tmp, $code);
+		$out = exec($this->binary . ' --version', $tmp, $code);
 
 		return $code == 0;
 	}
@@ -336,22 +418,17 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 	public static function DefaultBinary()
 	{
 		if (GitPHP_Util::IsWindows()) {
-
 			// windows
+
 			if (GitPHP_Util::Is64Bit()) {
 				// match x86_64 and x64 (64 bit)
 				// C:\Program Files (x86)\Git\bin\git.exe
-				$bin = 'C:\\Progra~2\\Git\\bin\\git.exe';
+				return 'C:\\Progra~2\\Git\\bin\\git.exe';
 			} else {
 				// 32 bit
 				// C:\Program Files\Git\bin\git.exe
-				$bin = 'C:\\Progra~1\\Git\\bin\\git.exe';
+				return 'C:\\Progra~1\\Git\\bin\\git.exe';
 			}
-			if (!is_file($bin)) {
-				// use PATH
-				$bin = 'git.exe';
-			}
-			return $bin;
 		} else {
 			// *nix, just use PATH
 			return 'git';

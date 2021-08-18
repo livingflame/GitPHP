@@ -12,9 +12,9 @@
 	{if $pathobject}
 		{assign var=pathobjectcommit value=$pathobject->GetCommit()}
 		{assign var=pathobjecttree value=$pathobjectcommit->GetTree()}
-		<a href="{geturl project=$project action=tree hashbase=$pathobjectcommit hash=$pathobjecttree}"><strong>[{$project->GetProject()}]</strong></a> /
+		<a href="{geturl project=$project action=tree hashbase=$pathobjectcommit hash=$pathobjecttree}"><strong>[{$project->GetProject()}]</strong></a> / 
 		{foreach from=$pathobject->GetPathTree() item=pathtreepiece}
-			<a href="{geturl project=$project action=tree hashbase=$pathobjectcommit hash=$pathtreepiece file=$pathtreepiece->GetPath()}"><strong>{$pathtreepiece->GetName()|escape}</strong></a> /
+			<a href="{geturl project=$project action=tree hashbase=$pathobjectcommit hash=$pathtreepiece file=$pathtreepiece->GetPath()}"><strong>{$pathtreepiece->GetName()|escape}</strong></a> / 
 		{/foreach}
 		{if $pathobject instanceof GitPHP_Blob}
 			{if $target == 'blobplain'}
@@ -26,7 +26,7 @@
 			{/if}
 		{elseif $pathobject->GetName()}
 			{if $target == 'tree'}
-				<a href="{geturl project=$project action=tree hashbase=$pathobjectcommit hash=$pathobject file=$pathobject->GetPath()}"><strong>{$pathobject->GetName()|escape}</strong></a> /
+				<a href="{geturl project=$project action=tree hashbase=$pathobjectcommit hash=$pathobject file=$pathobject->GetPath()}"><strong>{$pathobject->GetName()|escape}</strong></a> / 
 			{else}
 				<strong>{$pathobject->GetName()|escape}</strong> / 
 			{/if}

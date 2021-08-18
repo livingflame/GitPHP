@@ -52,7 +52,7 @@ class GitPHP_TagLoad_Git implements GitPHP_TagLoadStrategy_Interface
 		$args = array();
 		$args[] = '-t';
 		$args[] = $tag->GetHash();
-		$ret = trim($this->exe->Execute($tag->GetProject()->GetPath(), GIT_CAT_FILE, $args));
+		$ret = trim(implode("\n",$this->exe->Execute($tag->GetProject()->GetPath(), GIT_CAT_FILE, $args)));
 		
 		if ($ret === 'commit') {
 			/* light tag */
@@ -74,9 +74,7 @@ class GitPHP_TagLoad_Git implements GitPHP_TagLoadStrategy_Interface
 		$args = array();
 		$args[] = 'tag';
 		$args[] = $tag->GetName();
-		$ret = $this->exe->Execute($tag->GetProject()->GetPath(), GIT_CAT_FILE, $args);
-
-		$lines = explode("\n", $ret);
+		$lines = $this->exe->Execute($tag->GetProject()->GetPath(), GIT_CAT_FILE, $args);
 
 		if (!isset($lines[0]))
 			return;
@@ -120,8 +118,7 @@ class GitPHP_TagLoad_Git implements GitPHP_TagLoadStrategy_Interface
 				$args = array();
 				$args[] = 'tag';
 				$args[] = $objectHash;
-				$ret = $this->exe->Execute($tag->GetProject()->GetPath(), GIT_CAT_FILE, $args);
-				$lines = explode("\n", $ret);
+				$lines = $this->exe->Execute($tag->GetProject()->GetPath(), GIT_CAT_FILE, $args);
 				foreach ($lines as $i => $line) {
 					if (preg_match('/^tag (.+)$/', $line, $regs)) {
 						$name = trim($regs[1]);

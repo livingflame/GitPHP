@@ -63,7 +63,7 @@ class GitPHP_Controller_Remotes extends GitPHP_ControllerBase
 		$this->tpl->assign('page', $this->params['page']);
 		$skip = $this->params['page'] * 100;
 
-		$headlist = $this->GetProject()->GetRemoteHeadList()->GetOrderedHeads('-committerdate', 101, $skip);
+		$headlist = $this->GetProject()->GetRemoteList()->GetOrderedRemotes('-committerdate', 101, $skip);
 		if (isset($headlist) && (count($headlist) > 0)) {
 			if (count($headlist) > 100) {
 				$headlist = array_slice($headlist, 0, 100);

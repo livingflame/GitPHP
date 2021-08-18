@@ -9,26 +9,19 @@
  * @subpackage Javascript
  */
 
-define(["jquery", "migrate", "modules/getproject", "modules/lang", "modules/tooltip.snapshot"],
-	function(jQuery, migrate, project, lang, tooltipSnapshot) {
-
-		$ = jQuery;
-
-		lang($('div.lang_select'));
-		tooltipSnapshot($('a.snapshotTip'));
-
-		if (project) {
-
-			require(["jquery", "modules/tooltip.commit", "modules/tooltip.tag", "modules/hilight.parents"],
-				function($, tooltipCommit, tooltipTag, highlightParents) {
-					$(function() {
-						highlightParents($('table.shortlog td.hash'));
-						tooltipCommit($('a.commitTip'));
-						tooltipTag($('a.tagTip'));
-					});
-				}
-			);
-
-		}
+define(["jquery", "modules/getproject", "modules/lang", "modules/tooltip.snapshot", "modules/tooltip.commit", "modules/tooltip.tag", 'modules/loginpopup', 'modernizr'],
+	function($, project, lang, tooltipSnapshot, tooltipCommit, tooltipTag, loginpopup) {
+		$(function() {
+			lang($('div.lang_select'));
+			tooltipSnapshot($('a.snapshotTip'));
+      if (project) {
+        tooltipCommit($('a.commitTip'));
+        tooltipTag($('a.tagTip'));
+      }
+      if (!Modernizr.input.autofocus) {
+        $('input[autofocus]').filter(':first').focus();
+      }
+      loginpopup('a.loginLink');
+		});
 	}
 );

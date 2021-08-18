@@ -45,6 +45,13 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 	protected $exe;
 
 	/**
+	 * Object loader
+	 *
+	 * @var GitPHP_GitObjectLoader
+	 */
+	protected $objectLoader;
+
+	/**
 	 * Constructor
 	 *
 	 * @param GitPHP_Project $project project
@@ -55,8 +62,7 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 			throw new Exception('Project is required');
 
 		$this->project = $project;
-
-		$this->compat = $this->project->GetCompat();
+        $this->compat = $this->project->GetCompat();
 	}
 
 	/**
@@ -67,6 +73,26 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 	public function SetExe($exe)
 	{
 		$this->exe = $exe;
+	}
+
+	/**
+	 * Set object loader
+	 *
+	 * @param GitPHP_GitObjectLoader $objectLoader object loader
+	 */
+	public function SetObjectLoader($objectLoader)
+	{
+		$this->objectLoader = $objectLoader;
+	}
+
+	/**
+	 * Object loader
+	 *
+	 * @param GitPHP_GitObjectLoader $objectLoader object loader
+	 */
+	public function GetObjectLoader()
+	{
+		return $this->objectLoader;
 	}
 
 	/**
@@ -172,10 +198,18 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 				$commit = $this->cache->Get($key);
 			}
 
+			$strategy = null;
+			if ($this->compat) {
+				$strategy = new GitPHP_CommitLoad_Git($this->exe);
+			} else {
+				$strategy = new GitPHP_CommitLoad_Raw($this->objectLoader, $this->exe);
+			}
+
 			if ($commit) {
 				$commit->SetProject($this->project);
+				$commit->SetStrategy($strategy);
 			} else {
-				$commit = new GitPHP_Commit($this->project, $hash);
+				$commit = new GitPHP_Commit($this->project, $hash, $strategy);
 			}
 
 			$commit->AddObserver($this);
@@ -216,7 +250,7 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 			if ($this->compat) {
 				$strategy = new GitPHP_TagLoad_Git($this->exe);
 			} else {
-				$strategy = new GitPHP_TagLoad_Raw($this->project->GetObjectLoader());
+				$strategy = new GitPHP_TagLoad_Raw($this->objectLoader);
 			}
 
 			if ($tagObj) {
@@ -233,6 +267,35 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 		}
 
 		return $tagObj;
+	}
+
+
+    /**
+	 * Gets a single head
+	 *
+	 * @param string $head head to find
+	 * @param string $hash hash of head, if known
+	 * @return GitPHP_Head head object
+	 */
+	public function GetRemote($head, $hash = '')
+	{
+		if (empty($head))
+			return null;
+
+		$key = GitPHP_Remote::CacheKey($this->project->GetProject(), $head);
+
+		$headObj = null;
+		if ($this->memoryCache)
+			$headObj = $this->memoryCache->Get($key);
+
+		if (!$headObj) {
+			$headObj = new GitPHP_Remote($this->project, $head, $hash);
+
+			if ($this->memoryCache)
+				$this->memoryCache->Set($key, $headObj);
+		}
+
+		return $headObj;
 	}
 
 	/**
@@ -300,7 +363,7 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 			if ($this->compat) {
 				$strategy = new GitPHP_BlobLoad_Git($this->exe);
 			} else {
-				$strategy = new GitPHP_BlobLoad_Raw($this->project->GetObjectLoader(), $this->exe);
+				$strategy = new GitPHP_BlobLoad_Raw($this->objectLoader);
 			}
 
 			if ($blob) {
@@ -351,10 +414,17 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 				$tree = $this->cache->Get($key);
 			}
 
+			$strategy = null;
+			if ($this->compat) {
+				$strategy = new GitPHP_TreeLoad_Git($this->exe);
+			} else {
+				$strategy = new GitPHP_TreeLoad_Raw($this->objectLoader, $this->exe);
+			}
 			if ($tree) {
 				$tree->SetProject($this->project);
+				$tree->SetStrategy($strategy);
 			} else {
-				$tree = new GitPHP_Tree($this->project, $hash);
+				$tree = new GitPHP_Tree($this->project, $hash, $strategy);
 			}
 
 			$tree->AddObserver($this);
@@ -416,6 +486,18 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 			return;
 
 		$this->cache->Set($object->GetCacheKey(), $object);
+	}
+
+	/**
+	 * Notify that observable object changed
+	 *
+	 * @param GitPHP_Observable_Interface $object object
+	 * @param int $changeType type of change
+	 * @param array $args argument array
+	 */
+	public function getFileMime($file)
+	{
+        return new GitPHP_Mime($file);
 	}
 
 }

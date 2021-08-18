@@ -11,33 +11,44 @@ class GitPHP_TreeDiff implements Iterator
 {
 	
 	/**
-	 * Stores the from hash
+	 * The from tree hash
+	 *
+	 * @var string
 	 */
 	protected $fromHash;
 
 	/**
-	 * Stores the to hash
+	 * The to tree hash
+	 *
+	 * @var string
 	 */
 	protected $toHash;
 
 	/**
-	 * Stores whether to detect renames
+	 * Whether to detect renames
+	 *
+	 * @var boolean
 	 */
 	protected $renames;
 
 	/**
-	 * Stores the project
+	 * The project
+	 *
 	 * @var GitPHP_Project
 	 */
 	protected $project;
 
 	/**
-	 * Stores the individual file diffs
+	 * The individual file diffs
+	 *
+	 * @var GitPHP_FileDiff[]
 	 */
 	protected $fileDiffs = array();
 
 	/**
-	 * Stores whether data has been read
+	 * Whether data has been read
+	 *
+	 * @var boolean
 	 */
 	protected $dataRead = false;
 
@@ -65,6 +76,7 @@ class GitPHP_TreeDiff implements Iterator
 
 	/**
 	 * Executable
+	 *
 	 * @var GitPHP_GitExe
 	 */
 	protected $exe;
@@ -76,26 +88,22 @@ class GitPHP_TreeDiff implements Iterator
 	 * @param GitPHP_GitExe $exe executable
 	 * @param string $toHash to commit hash
 	 * @param string $fromHash from commit hash
-	 * @param string $path Path filter to diff two revisions
 	 * @param boolean $renames whether to detect file renames
-	 * @param boolean $spaces false to ignore white spaces (todo: merge to a single $options param)
 	 */
-	public function __construct($project, $exe, $toHash, $fromHash = '', $path = '', $renames = false, $spaces = true)
+	public function __construct($project, $exe, $toHash, $fromHash = '', $renames = false)
 	{
-		if (!$project || is_string($project))
+		if (!$project)
 			throw new Exception('Project is required');
-
 		$this->project = $project;
 
 		if (!$exe)
-			$exe = GitPHP_GitExe::GetInstance();
-
+			throw new Exception('Git executable is required');
 		$this->exe = $exe;
 
 		$toCommit = $project->GetCommit($toHash);
 		$this->toHash = $toHash;
 
-		if (empty($fromHash) && is_object($toCommit)) {
+		if (empty($fromHash)) {
 			$parent = $toCommit->GetParent();
 			if ($parent) {
 				$this->fromHash = $parent->GetHash();
@@ -104,21 +112,17 @@ class GitPHP_TreeDiff implements Iterator
 			$this->fromHash = $fromHash;
 		}
 
-		$this->path = $path;
-
 		$this->renames = $renames;
-
-		$this->whiteSpaces = $spaces;
 	}
 
 	/**
 	 * Gets the project
 	 *
-	 * @return mixed project
+	 * @return GitPHP_Project project
 	 */
 	public function GetProject()
 	{
-		return GitPHP_ProjectList::GetInstance()->GetProject($this->project);
+		return $this->project;
 	}
 
 	/**
@@ -128,11 +132,6 @@ class GitPHP_TreeDiff implements Iterator
 	{
 		if ($this->totalStat == -1)
 			$this->GetStats();
-
-		if ($this->totalStat > 2000) {
-			//TODO: too big...
-		}
-
 		$this->dataRead = true;
 
 		$this->fileDiffs = array();
@@ -142,36 +141,23 @@ class GitPHP_TreeDiff implements Iterator
 		$args[] = '-r';
 		if ($this->renames)
 			$args[] = '-M';
-
-		if (!$this->whiteSpaces)
-			$args[] = '-w';
-
+        $args[] = '-w';
 		if (empty($this->fromHash))
 			$args[] = '--root';
 		else
 			$args[] = $this->fromHash;
 
 		$args[] = $this->toHash;
-
-		if (!empty($this->path)) {
-			$args[] = '--';
-			$args[] = escapeshellarg($this->path);
-		}
-
-		$diffTreeLines = explode("\n", $this->exe->Execute($this->GetProject()->GetPath(), GIT_DIFF_TREE, $args));
+		$diffTreeLines = $this->exe->Execute($this->GetProject()->GetPath(), GIT_DIFF_TREE, $args);
 		foreach ($diffTreeLines as $line) {
 			$trimmed = trim($line);
 			if ((strlen($trimmed) > 0) && (substr_compare($trimmed, ':', 0, 1) === 0)) {
 				try {
-					// $this->fileDiffs[] = $this->GetProject()->GetObjectManager()->GetFileDiff($trimmed);
-
-					// TODO: add this in GitPHP_FileDiff
-					$fileDiff = new GitPHP_FileDiff($this->GetProject(), $trimmed);
-					$file = $fileDiff->GetFromFile();
-					$mimetype = GitPHP_Mime::FileMime($file, true);
-					$fileDiff->isPicture = ($mimetype == 'image');
-					$fileDiff->whiteSpaces = $this->whiteSpaces;
-					if (!$fileDiff->isPicture) {
+                    $fileDiff = $this->GetProject()->GetObjectManager()->GetFileDiff($trimmed);
+                    $file = $fileDiff->GetFromFile();
+                    $mime = $this->GetProject()->GetObjectManager()->getFileMime($file);
+                    $fileDiff->isPicture = $mime->isImage();
+                    if (!$fileDiff->isPicture) {
 						if (isset($this->fileStat[$file])) {
 							$arStat = $this->fileStat[$file];
 							$fileDiff->totAdd = reset($arStat);
@@ -179,13 +165,11 @@ class GitPHP_TreeDiff implements Iterator
 						}
 					}
 					$this->fileDiffs[] = $fileDiff;
-
 				} catch (Exception $e) {
 				}
 			}
 		}
 	}
-
 	/**
 	 * Reads the tree diff --numstat
 	 */
@@ -201,7 +185,6 @@ class GitPHP_TreeDiff implements Iterator
 		if ($this->renames)
 			$args[] = '-M';
 
-		if (!$this->whiteSpaces)
 			$args[] = '-w';
 
 		if (empty($this->fromHash))
@@ -222,17 +205,30 @@ class GitPHP_TreeDiff implements Iterator
 		//0       124     gitphp.css
 
 		$output = $this->exe->Execute($this->GetProject()->GetPath(), GIT_DIFF_TREE, $args);
-		$re_split = "^(\d+)\s+(\d+)\s+(.*)$";
-		if (preg_match_all('/'.$re_split.'/m', $output, $m, PREG_PATTERN_ORDER)) {
-			foreach ($m[3] as $key => $file) {
-				$add = intval($m[1][$key]);
-				$del = intval($m[2][$key]);
+		foreach($output as $line){
+			if (preg_match('/^(\d+)\s+(\d+)\s+(.*)$/m', $line, $m)) {
+				$file = $m[3];
+				$add = intval($m[1]);
+				$del = intval($m[2]);
 				$this->fileStat[$file] = array($add, $del);
 				$this->totalStat += $add + $del;
 			}
 		}
-	}
 
+	}
+    
+	/**
+	 * Gets the number of line changes in this treediff
+	 *
+	 * @return integer count of line changes
+	 */
+	public function StatCount()
+	{
+		if ($this->totalStat == -1)
+			$this->GetStats();
+
+		return $this->totalStat;
+	}
 	/**
 	 * Gets the from hash for this treediff
 	 *
@@ -251,16 +247,6 @@ class GitPHP_TreeDiff implements Iterator
 	public function GetToHash()
 	{
 		return $this->toHash;
-	}
-
-	/**
-	 * Gets the path filter
-	 *
-	 * @return string
-	 */
-	public function GetPath()
-	{
-		return $this->path;
 	}
 
 	/**
@@ -289,6 +275,8 @@ class GitPHP_TreeDiff implements Iterator
 
 	/**
 	 * Rewinds the iterator
+	 *
+	 * @return GitPHP_FileDiff
 	 */
 	function rewind()
 	{
@@ -300,6 +288,8 @@ class GitPHP_TreeDiff implements Iterator
 
 	/**
 	 * Returns the current element in the array
+	 *
+	 * @return GitPHP_FileDiff
 	 */
 	function current()
 	{
@@ -311,6 +301,8 @@ class GitPHP_TreeDiff implements Iterator
 
 	/**
 	 * Returns the current key
+	 *
+	 * @return int
 	 */
 	function key()
 	{
@@ -322,6 +314,8 @@ class GitPHP_TreeDiff implements Iterator
 
 	/**
 	 * Advance the pointer
+	 *
+	 * @return GitPHP_FileDiff
 	 */
 	function next()
 	{
@@ -333,6 +327,8 @@ class GitPHP_TreeDiff implements Iterator
 
 	/**
 	 * Test for a valid pointer
+	 *
+	 * @return boolean
 	 */
 	function valid()
 	{
@@ -343,9 +339,9 @@ class GitPHP_TreeDiff implements Iterator
 	}
 
 	/**
-	 * Gets the number of changed files in this treediff
+	 * Gets the number of file changes in this treediff
 	 *
-	 * @return integer count of changed files
+	 * @return integer count of file changes
 	 */
 	public function Count()
 	{
@@ -355,16 +351,4 @@ class GitPHP_TreeDiff implements Iterator
 		return count($this->fileDiffs);
 	}
 
-	/**
-	 * Gets the number of line changes in this treediff
-	 *
-	 * @return integer count of line changes
-	 */
-	public function StatCount()
-	{
-		if ($this->totalStat == -1)
-			$this->GetStats();
-
-		return $this->totalStat;
-	}
 }

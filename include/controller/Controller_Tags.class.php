@@ -65,15 +65,18 @@ class GitPHP_Controller_Tags extends GitPHP_ControllerBase
 
 		$this->tpl->assign('page', $this->params['page']);
 		$skip = $this->params['page'] * 100;
+		$hasmoretags = false;
 
 		$taglist = $this->GetProject()->GetTagList()->GetOrderedTags('-creatordate', 101, $skip);
 		if (isset($taglist) && (count($taglist) > 0)) {
 			if (count($taglist) > 100) {
 				$taglist = array_slice($taglist, 0, 100);
-				$this->tpl->assign('hasmoretags', true);
+				$hasmoretags = true;
 			}
-			$this->tpl->assign("taglist",$taglist);
+			
 		}
+		$this->tpl->assign("taglist",$taglist);
+		$this->tpl->assign('hasmoretags', $hasmoretags);
 	}
 
 }

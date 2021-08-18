@@ -7,17 +7,8 @@
  * @package GitPHP
  * @subpackage Git\Archive
  */
-
 class GitPHP_Archive
 {
-	/**
-	 * Compression formats
-	 */
-	const COMPRESS_TAR = 'tar';
-	const COMPRESS_BZ2 = 'bz2';
-	const COMPRESS_GZ  = 'gz';
-	const COMPRESS_ZIP = 'zip';
-
 	/**
 	 * The object type for this archive
 	 *
@@ -51,6 +42,13 @@ class GitPHP_Archive
 	 *
 	 * @var string
 	 */
+	protected $cache_dir;
+
+	/**
+	 * The archive path
+	 *
+	 * @var string
+	 */
 	protected $path = '';
 
 	/**
@@ -76,15 +74,13 @@ class GitPHP_Archive
 	 * @param string $path subtree path to archive
 	 * @param string $prefix archive directory prefix
 	 */
-	public function __construct($project, $gitObject, GitPHP_ArchiveStrategy_Interface $strategy, $path = '', $prefix = '')
+	public function __construct($project, $gitObject, GitPHP_ArchiveStrategy_Interface $strategy)
 	{
 		$this->SetProject($project);
 		$this->SetObject($gitObject);
 		if (!$this->project && $gitObject) {
 			$this->project = $gitObject->GetProject();
 		}
-		$this->SetPath($path);
-		$this->SetPrefix($prefix);
 
 		if (!$strategy)
 			throw new Exception('Archiving strategy is required');
@@ -113,7 +109,7 @@ class GitPHP_Archive
 	public function GetObject()
 	{
 		if ($this->objectType == 'commit') {
-			return $this->GetProject()->GetObjectManager()->GetCommit($this->objectHash);
+			return $this->GetProject()->GetCommit($this->objectHash);
 		}
 
 		if ($this->objectType = 'tree') {
@@ -170,10 +166,7 @@ class GitPHP_Archive
 	 */
 	public function SetProject($project)
 	{
-		if (is_object($project))
-			$this->project = $project;
-		elseif (is_string($project))
-			$this->project = GitPHP_ProjectList::GetInstance()->GetProject($project);
+		$this->project = $project;
 	}
 
 	/**
@@ -247,8 +240,8 @@ class GitPHP_Archive
 
 		if (!empty($this->path))
 			$pfx .= $this->path . '/';
-
-		return $pfx;
+		$explode = array_filter(explode("/", $pfx));
+		return implode("/",$explode) . '/';
 	}
 
 	/**
@@ -268,6 +261,26 @@ class GitPHP_Archive
 		}
 
 		$this->prefix = $prefix;
+	}
+
+	/**
+	 * Gets the directory prefix to use for files in this archive
+	 *
+	 * @return string prefix
+	 */
+	public function GetCacheDir()
+	{
+		return $this->cache_dir;
+	}
+
+	/**
+	 * Sets the directory prefix to use for files in this archive
+	 *
+	 * @param string $prefix prefix to use
+	 */
+	public function SetCacheDir($cache_dir )
+	{
+		$this->cache_dir = $cache_dir;
 	}
 
 	/**
@@ -306,17 +319,6 @@ class GitPHP_Archive
 	}
 
 	/**
-	 * Read a chunk of the archive data
-	 *
-	 * @param int $size size of data to read
-	 * @return string archive data
-	 */
-	public function Read($size = 1048576)
-	{
-		return $this->strategy->Read($size);
-	}
-
-	/**
 	 * Gets the supported formats for the archiver
 	 *
 	 * @return array array of formats mapped to extensions
@@ -332,10 +334,6 @@ class GitPHP_Archive
 		$strategy = new GitPHP_Archive_Zip();
 		if ($strategy->Valid())
 			$formats[GITPHP_COMPRESS_ZIP] = $strategy->Extension();
-
-		$strategy = new GitPHP_Archive_Bzip2();
-		if ($strategy->Valid())
-			$formats[GITPHP_COMPRESS_BZ2] = $strategy->Extension();
 
 		$strategy = new GitPHP_Archive_Gzip();
 		if ($strategy->Valid())

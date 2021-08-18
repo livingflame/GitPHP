@@ -437,8 +437,8 @@ msgstr "無効な検索タイプ"
 # %1$s: the user's search string
 #: include/controller/Controller_Search.class.php:168
 #, php-format
-msgid "No matches for \"%1$s\""
-msgstr "\"%1$s\"にマッチするものはありません"
+msgid "No matches for \"%1\""
+msgstr "\"%1\"にマッチするものはありません"
 
 # A type of filesystem object stored in a project
 #: include/git/Blob.class.php:166
@@ -691,8 +691,8 @@ msgstr "(すべて表示)"
 # %2$s: the filename of the second file
 #: include/git/FileDiff.class.php:810
 #, php-format
-msgid "Binary files %1$s and %2$s differ"
-msgstr "バイナリファイル %1$s と %2$s は異なります"
+msgid "Binary files %1 and %2 differ"
+msgstr "バイナリファイル %1 と %2 は異なります"
 
 # Used to label the url of the website of the project
 #: templates/project.tpl

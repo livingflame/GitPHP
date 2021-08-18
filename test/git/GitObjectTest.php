@@ -7,9 +7,6 @@
  * @package GitPHP
  * @subpackage Test\Git
  */
-
-include_once('../include/helpers.php');
-
 class GitPHP_GitObjectTest extends PHPUnit_Framework_TestCase
 {
 	public function testHash()

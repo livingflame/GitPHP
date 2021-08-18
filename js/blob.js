@@ -9,8 +9,7 @@
  * @subpackage Javascript
  */
 
-define(["jquery", "modules/blameasync"],
-function($, blameAsync) {
+define(["jquery", "modules/blameasync", "common"], function($, blameAsync) {
 	$(function() {
 		blameAsync.init($('table#blobData'), $('a#blameLink'));
 	});

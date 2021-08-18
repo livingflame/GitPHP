@@ -94,3 +94,5 @@ function smarty_function_agestring($params, Smarty_Internal_Template $template)
 	else
 		return $output;
 }
+
+?>

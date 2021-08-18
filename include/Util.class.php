@@ -75,15 +75,27 @@ class GitPHP_Util
 	 *
 	 * @return string slug
 	 */
-	public static function MakeSlug($str)
+	public static function MakeSlug($text)
 	{
-		$from = array(
-			'/&'
-		);
-		$to = array(
-			'--'
-		);
-		return str_replace($from, $to, $str);
+        $text = str_replace('%20',' ',$text);
+        // replace non letter or digits by -
+        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
+
+        // transliterate
+        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+
+        // remove unwanted characters
+        $text = preg_replace('~[^-\w]+~', '', $text);
+
+        // trim
+        $text = trim($text, '-');
+
+        // remove duplicated - symbols
+        $text = preg_replace('~-+~', '-', $text);
+
+        // lowercase
+        // $text = strtolower($text);
+        return $text;
 	}
 
 	/**
@@ -287,5 +299,26 @@ class GitPHP_Util
 			return $tzdatawin[$tz];
 
 		return $tz;
+	}
+    	/**
+	 * Tests whether a function is allowed to be called
+	 *
+	 * @param string $function functio name
+	 * @return true if allowed
+	 */
+	public static function FunctionAllowed($function)
+	{
+		if (empty($function))
+			return false;
+
+		$disabled = @ini_get('disable_functions');
+		if (!$disabled) {
+			// no disabled functions
+			// or ini_get is disabled so we can't reliably figure this out
+			return true;
+		}
+
+		$disabledlist = explode(', ', $disabled);
+		return !in_array($function, $disabledlist);
 	}
 }

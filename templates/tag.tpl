@@ -8,11 +8,9 @@
 {extends file='projectbase.tpl'}
 
 {block name=main}
-
  {* Nav *}
  <div class="page_nav">
    {include file='nav.tpl' commit=$head treecommit=$head}
-   <br /><br />
  </div>
  {* Tag data *}
  {assign var=object value=$tag->GetObject()}
@@ -42,16 +40,16 @@
      {if $tag->GetTagger()}
        <tr>
          <td>{t}author{/t}</td>
-         <td>{$tag->GetTagger()}</td>
+	 <td>{$tag->GetTagger()}</td>
        </tr>
        <tr>
          <td></td>
-	 <td> {$tag->GetTaggerEpoch()|date_format:"%a, %d %b %Y %H:%M:%S"} {date('O')} 
+	 <td> <time datetime="{$tag->GetTaggerEpoch()|date_format:"%Y-%m-%dT%H:%M:%S+00:00"}">{$tag->GetTaggerEpoch()|date_format:"%a, %d %b %Y %H:%M:%S %z"}</time>
 	 {assign var=hourlocal value=$tag->GetTaggerLocalEpoch()|date_format:"%H"}
 	 {if $hourlocal < 6}
-	 (<span class="latenight">{$tag->GetTaggerLocalEpoch()|date_format:"%R"}</span> {$tag->GetTaggerTimezone()})
+	 (<time datetime="{$tag->GetTaggerLocalEpoch()|date_format:"%Y-%m-%dT%H:%M:%S"}{$tag->GetTaggerTimezone(true)}"><span class="latenight">{$tag->GetTaggerLocalEpoch()|date_format:"%R"}</span> {$tag->GetTaggerTimezone()}</time>)
 	 {else}
-	 ({$tag->GetTaggerLocalEpoch()|date_format:"%R"} {$tag->GetTaggerTimezone()})
+	 (<time datetime="{$tag->GetTaggerLocalEpoch()|date_format:"%Y-%m-%dT%H:%M:%S"}{$tag->GetTaggerTimezone(true)}">{$tag->GetTaggerLocalEpoch()|date_format:"%R"} {$tag->GetTaggerTimezone()}</time>)
 	 {/if}
          </td>
        </tr>
@@ -65,7 +63,7 @@
      {if strncasecmp(trim($line),'-----BEGIN PGP',14) == 0}
      <span class="pgpSig">
      {/if}
-     {$line|htmlspecialchars|commithash|buglink:$bugpattern:$bugurl}<br />
+     {$line|htmlspecialchars|buglink:$bugpattern:$bugurl}<br />
      {if strncasecmp(trim($line),'-----END PGP',12) == 0}
      </span>
      {/if}

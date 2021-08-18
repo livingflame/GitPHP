@@ -13,7 +13,7 @@ define(["jquery", "modules/geturl", "modules/getproject", 'modules/resources'],
 	function($, url, project, resources) {
 
 		function getTagName(element) {
-			var tag = element.attr('href').match(/[ht]=([^&]+)/);
+			var tag = element.attr('href').match(/t=([^&]+)/);
 			if (!tag) {
 				tag = element.attr('href').match(/\/tags\/([^\/\?]+)/);
 			}
@@ -30,25 +30,22 @@ define(["jquery", "modules/geturl", "modules/getproject", 'modules/resources'],
 							p: project,
 							a: 'tag',
 							o: 'jstip',
-							t: tag,
-							h: tag
+							t: tag
 						},
 						type: 'GET'
 					}
 				},
 				style: {
-					classes: 'ui-tooltip-gitphp qtip-light qtip-shadow'
+					classes: 'ui-tooltip-gitphp ui-tooltip-light ui-tooltip-shadow'
 				},
 				position: {
-					adjust: {
-						screen: true
-					},
 					viewport: $(window)
 				}
 			}
 		}
 
 		return function(elements) {
+
 			if (elements && (elements.size() > 0)) {
 				require(['qtip'], function() {
 					elements.each(function(){

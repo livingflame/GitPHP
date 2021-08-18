@@ -81,7 +81,6 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 	 * @param GitPHP_Commit $head commit to start history from
 	 * @param int $limit limit of revisions to walk
 	 * @param int $skip number of revisions to skip
-	 * @param int $renamesDepth number of tracked $path renames
 	 */
 	public function __construct($project, $path, $exe, $head = null, $limit = 0, $skip = 0, $renamesDepth = 1)
 	{
@@ -108,8 +107,7 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 		$this->path = $path;
 
 		$this->exe = $exe;
-
-		$this->renamesDepth = max(0, $renamesDepth); // prevent negative values
+        $this->renamesDepth = max(0, $renamesDepth); // prevent negative values
 	}
 
 	/**
@@ -286,8 +284,7 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 			}
 		}
 
-		$hasGrep = !GitPHP_Util::isWindows();
-
+        $hasGrep = !GitPHP_Util::isWindows();
 		$args[] = '--';
 		$args[] = $this->path;
 		$args[] = '|';
@@ -308,8 +305,7 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 			$args[] = '--';
 		}
 		$args[] = escapeshellarg($this->path);
-		
-		$historylines = explode("\n", $this->exe->Execute($this->project->GetPath(), GIT_REV_LIST, $args));
+		$historylines = $this->exe->Execute($this->project->GetPath(), GIT_REV_LIST, $args);
 
 		$commitHash = null;
 		foreach ($historylines as $line) {
@@ -345,7 +341,6 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 			);
 			$this->history = array_merge($this->history, $renamedHistory->GetHistoryArray());
 		}
-
 		if (($this->skip > 0) && (!$canSkip)) {
 			if ($this->limit > 0) {
 				$this->history = array_slice($this->history, $this->skip, $this->limit);
@@ -353,7 +348,6 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 				$this->history = array_slice($this->history, $this->skip);
 			}
 		}
-
 	}
 
 	/**

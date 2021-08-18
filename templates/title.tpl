@@ -24,11 +24,12 @@
 			<a href="{geturl project=$project action=commit hash=$titlecommit}" class="title">{$titlecommit->GetTitle()|escape}</a>
 		{/if}
 		{include file='refbadges.tpl' commit=$titlecommit}
-
+		<a href="{geturl project=$project action=snapshot hash=$titlecommit}" class="snapshotTip">{t}snapshot{/t}</a>
 		<span class="timestamp">{time()|date_format:"%a, %d %b %Y %H:%M"} {date('T')}</span>
-
 	{else}
-		{if $target == 'shortlog'}
+		{if $target == 'summary'}
+			<a href="{geturl project=$project}" class="title">&nbsp;</a>
+		{elseif $target == 'shortlog'}
 			{if $disablelink}
 			  {t}shortlog{/t}
 			{else}
@@ -42,9 +43,9 @@
 			{/if}
 		{elseif $target == 'heads'}
 			{if $disablelink}
-			  {t}heads{/t}
+			  {t}branches{/t}
 			{else}
-			  <a href="{geturl project=$project action=heads}" class="title">{t}heads{/t}</a>
+			  <a href="{geturl project=$project action=heads}" class="title">{t}branches{/t}</a>
 			{/if}
 		{elseif $target == 'remotes'}
 			{if $disablelink}

@@ -10,7 +10,7 @@
 class GitPHP_Controller_Message extends GitPHP_ControllerBase
 {
 	/**
-	 * Initialize controller
+	 * Constructor
 	 */
 	public function Initialize()
 	{
@@ -20,6 +20,8 @@ class GitPHP_Controller_Message extends GitPHP_ControllerBase
 		}
 
 		$this->InitializeResource();
+
+		$this->InitializeUserList();
 
 		$this->InitializeGitExe(false);
 
@@ -33,10 +35,16 @@ class GitPHP_Controller_Message extends GitPHP_ControllerBase
 		} catch (Exception $e) {
 		}
 
-		if (isset($this->params['project']) && $this->projectList) {
+		if (!empty($this->params['project']) && $this->projectList) {
 			$project = $this->projectList->GetProject($this->params['project']);
 			if ($project) {
-				$this->project = $project->GetProject();
+				if ($this->userList && ($this->userList->GetCount() > 0)) {
+					if ($project->UserCanAccess((!empty($_SESSION['gitphpuser']) ? $_SESSION['gitphpuser'] : null))) {
+						$this->project = $project->GetProject();
+					}
+				} else {
+					$this->project = $project->GetProject();
+				}
 			}
 		}
 
@@ -105,14 +113,10 @@ class GitPHP_Controller_Message extends GitPHP_ControllerBase
 	 */
 	protected function LoadData()
 	{
-		$message = $this->ExceptionToMessage($this->params['exception']);
-		$this->tpl->assign('message', $message);
+		$this->tpl->assign('message', $this->ExceptionToMessage($this->params['exception']));
 		if (($this->params['exception'] instanceof GitPHP_MessageException) && ($this->params['exception']->Error)) {
-			if (empty($message) && isset($this->params['message']) )
-				$this->tpl->assign('message', $this->params['message']);
 			$this->tpl->assign('error', true);
 		}
-
 		if ($this->project) {
 			try {
 				$co = $this->GetProject()->GetCommit($this->params['hash']);
@@ -240,19 +244,36 @@ class GitPHP_Controller_Message extends GitPHP_ControllerBase
 		if ($exception instanceof GitPHP_AmbiguousHashException) {
 			if ($this->resource)
 				return sprintf($this->resource->translate('Ambiguous abbreviated hash %1$s'), $exception->Hash);
+			
 			return sprintf('Ambiguous abbreviated hash %1$s', $exception->Hash);
 		}
 
 		if ($exception instanceof GitPHP_DirectoryNotFoundException) {
 			if ($this->resource)
 				return sprintf($this->resource->translate('Directory %1$s not found'), $exception->Directory);
+
 			return sprintf('Directory %1$s not found', $exception->Directory);
 		}
 
 		if ($exception instanceof GitPHP_FileNotFoundException) {
 			if ($this->resource)
 				return sprintf($this->resource->translate('File %1$s not found'), $exception->File);
+
 			return sprintf('File %1$s not found', $exception->File);
+		}
+
+		if ($exception instanceof GitPHP_UnauthorizedProjectException) {
+			if ($this->resource)
+				return sprintf($this->resource->translate('You are not authorized to access project %1$s'), $exception->Project);
+
+			return sprintf('You are not authorized to access project %1$s', $exception->Project);
+		}
+
+		if ($exception instanceof GitPHP_DisabledFunctionException) {
+			if ($this->resource)
+				return sprintf($this->resource->translate('Required function %1$s has been disabled'), $exception->Function);
+
+			return sprintf('Required function %1$s has been disabled', $exception->Function);
 		}
 
 		return $exception->getMessage();

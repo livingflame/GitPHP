@@ -10,144 +10,129 @@
  *}
 <!DOCTYPE html>
 <html lang="{$currentprimarylocale}">
-  <!-- gitphp web interface {$version}, (C) 2006-2013 Christopher Han <xiphux@gmail.com>, Tanguy Pruvot <tpruvot@github> -->
+  <!-- gitphp web interface {$version}, (C) 2006-2011 Christopher Han <xiphux@gmail.com> -->
   <head>
-    <title>
-    {block name=title}
-    {$pagetitle}
-    {/block}
-    </title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    {block name=feeds}
-    {/block}
+    <title>{block name=title}{$pagetitle}{/block}</title>
+    {block name=feeds}{/block}
+    {block name=links}{/block}
     {if file_exists('css/gitphp.min.css')}
-    <link rel="stylesheet" href="{$baseurl}/css/gitphp.min.css" type="text/css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/gitphp.min.css" />
     {else}
-    <link rel="stylesheet" href="{$baseurl}/css/gitphp.css" type="text/css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/gitphp.css" />
     {/if}
     {if file_exists("css/$stylesheet.min.css")}
-    <link rel="stylesheet" href="{$baseurl}/css/{$stylesheet}.min.css" type="text/css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/{$stylesheet}.min.css" />
     {else}
-    <link rel="stylesheet" href="{$baseurl}/css/{$stylesheet}.css" type="text/css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/{$stylesheet}.css" />
     {/if}
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/ext/jquery.qtip.min.css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/all.min.css" />
     {block name=css}
     {/block}
-    <link rel="stylesheet" href="{$baseurl}/css/ext/jquery.qtip.css" type="text/css" />
-    {if $extracss}
-    <style type="text/css">
-    {$extracss}
-    </style>
-    {/if}
-    <link rel="stylesheet" href="{$baseurl}/css/print.css" type="text/css" media="print" />
+
     {if $javascript}
     <script type="text/javascript">
-	var GitPHPJSPaths = {
+    var require = {
+    	baseUrl: '{$baseurl}/js',
+	paths: {
 		jquery: [
 			{if $googlejs}
-			'//ajax.googleapis.com/ajax/libs/jquery/1.10.0/jquery.min',
+			'https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min',
 			{/if}
-			'ext/jquery.min'
+			'ext/jquery-1.8.2.min'
 		],
-		migrate: 'ext/jquery-migrate.min',
-		qtip: 'ext/jquery.qtip',
-		modernizr: 'ext/modernizr.custom'
-	};
-
-	{block name=javascriptpaths}
-	{/block}
-
-	var reqcfg = {
-		baseUrl: '{$baseurl}/js',
-		paths: GitPHPJSPaths,
-		config: {
-			'modules/snapshotformats': {
-				formats: {
-					{foreach from=$snapshotformats key=format item=extension name=formats}
-					"{$format}": "{$extension}"{if !$smarty.foreach.formats.last},{/if}
-					{/foreach}
-				}
-			},
-			{if $project}
-			'modules/getproject': {
-				project: '{$project->GetProject()}'
-			},
-			{/if}
-			'modules/geturl': {
-				baseurl: '{$baseurl}/'
-			},
-			'modules/resources': {
-				resources: {
-					Loading: "{t escape='js'}Loading…{/t}",
-					LoadingBlameData: "{t escape='js'}Loading blame data…{/t}",
-					Snapshot: "{t escape='js'}snapshot{/t}",
-					NoMatchesFound: '{t escape=no}No matches found for "%1"{/t}'
-				}
+		d3: 'ext/d3.v2.min',
+		qtip: 'ext/jquery.qtip.min',
+		modernizr: 'ext/modernizr.custom',
+        ace : "ace"
+	},
+	config: {
+		'modules/snapshotformats': {
+			formats: {
+				{foreach from=$snapshotformats key=format item=extension name=formats}
+				"{$format}": "{$extension}"{if !$smarty.foreach.formats.last},{/if}
+				{/foreach}
+			}
+		},
+		{if $project}
+		'modules/getproject': {
+			project: '{$project->GetProject()}'
+		},
+		{/if}
+		'modules/geturl': {
+			baseurl: '{$baseurl}/'
+		},
+		'modules/resources': {
+			resources: {
+				Loading: "{t escape='js'}Loading…{/t}",
+				LoadingBlameData: "{t escape='js'}Loading blame data…{/t}",
+				Snapshot: "{t escape='js'}snapshot{/t}",
+				NoMatchesFound: '{t escape=no}No matches found for "%1"{/t}',
+        UsernameLabel: "{t escape='js'}username:{/t}",
+        PasswordLabel: "{t escape='js'}password:{/t}",
+        Login: "{t escape='js'}login{/t}",
+        AnErrorOccurredWhileLoggingIn: "{t escape='js'}An error occurred while logging in{/t}",
+        LoginTitle: "{t escape='js'}Login{/t}",
+        UsernameIsRequired: "{t escape='js'}Username is required{/t}",
+        PasswordIsRequired: "{t escape='js'}Password is required{/t}"
 			}
 		}
-	};
-
-	{if file_exists('js/common.min.js')}
-	reqcfg.paths.common = "common.min";
-	{/if}
-	reqcfg.deps = ['common'];
-
-	var GitPHPJSModules = null;
-	{block name=javascriptmodules}
-	{/block}
-
+	}
+    };
+    {block name=javascript}
+      {if file_exists('js/common.min.js')}
+      require.paths.common = 'common.min';
+      {/if}
+      require.deps = ['common'];
+    {/block}
     </script>
     <script type="text/javascript" src="{$baseurl}/js/ext/require.js"></script>
-    <script type="text/javascript">
-	reqcfg.deps = reqcfg.deps.concat(GitPHPJSModules);
-	require.config(reqcfg);
-    </script>
-    {block name=javascript}
-    {/block}
     {/if}
   </head>
   <body>
     <div class="page_header">
-      <a href="http://git-scm.com" title="git homepage">
-        <img src="{$baseurl}/images/git-logo.png" width="72" height="27" alt="git" class="logo" />
-      </a>
-      {if $supportedlocales}
-      <div class="lang_select">
-        <form action="{$requesturl}" method="get" id="frmLangSelect">
-         <div>
-	{foreach from=$requestvars key=var item=val}
-	{if $var != "l"}
-	<input type="hidden" name="{$var}" value="{$val|escape}" />
-	{/if}
-	{/foreach}
-	<label for="selLang">{t}language:{/t}</label>
-	<select name="l" id="selLang">
-	  {foreach from=$supportedlocales key=locale item=language}
-	    <option {if $locale == $currentlocale}selected="selected"{/if} value="{$locale}">{if $language}{$language} ({$locale}){else}{$locale}{/if}</option>
-	  {/foreach}
-	</select>
-	<input type="submit" value="{t}set{/t}" id="btnLangSet" />
-         </div>
-	</form>
+      {if $loginenabled}
+      <div class="login">
+      {if $loggedinuser}
+        <a href="{geturl action=logout}" /><i class="fa fa-sign-out" aria-hidden="true"></i> {t 1=$loggedinuser}logout{/t}</a>
+      {else if $action == 'login'}
+        {t}login{/t}
+      {else}
+        <a href="{geturl action=login}" class="loginLink" /><i class="fa fa-sign-in" aria-hidden="true"></i> {t}login{/t}</a>
+      {/if}
       </div>
       {/if}
       {block name=header}
-      <a href="{$baseurl}/">{if $homelink}{$homelink}{else}{t}projects{/t}{/if}</a> /
+      <a href="{geturl}">{if $homelink}{$homelink}{else}{t}projects{/t}{/if}</a> /
       {/block}
     </div>
 {block name=main}
 
 {/block}
     <div class="page_footer">
+        {if $supportedlocales}
+        <div class="lang_select">
+            <form action="{$requesturl}" method="get" id="frmLangSelect">
+                {foreach from=$requestvars key=var item=val}
+                {if $var != "l"}
+                <input type="hidden" name="{$var}" value="{$val|escape}" />
+                {/if}
+                {/foreach}
+                <label for="selLang">{t}language:{/t}</label>
+                <select name="l" id="selLang">
+                    {foreach from=$supportedlocales key=locale item=language}
+                    <option {if $locale == $currentlocale}selected="selected"{/if} value="{$locale}">{if $language}{$language} ({$locale}){else}{$locale}{/if}</option>
+                    {/foreach}
+                </select>
+                <input type="submit" value="{t}set{/t}" id="btnLangSet" />
+            </form>
+        </div>
+        {/if}
+		<div class="attr_footer">
+			<a href="http://www.gitphp.org/" target="_blank">GitPHP by Chris Han</a>
+		</div>
       {block name=footer}
       {/block}
     </div>
-    <div class="attr_footer">
-        <a href="https://github.com/tpruvot/GitPHP" target="_blank">GitPHP(repo) by Tanguy Pruvot</a>, based on <a href="http://source.gitphp.org/">original version by Chris Han</a>
-    </div>
-{if $debug}
-    <div class="debug_footer">
-    <!-- keep unclosed for debug log -->
-{else}
   </body>
 </html>
-{/if}

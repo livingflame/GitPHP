@@ -7,13 +7,11 @@
  *}
 {extends file='projectbase.tpl'}
 
-{block name=javascriptpaths}
+{block name=javascript}
+require.deps = ['tree'];
 {if file_exists('js/tree.min.js')}
-GitPHPJSPaths.tree = "tree.min";
+require.paths.tree = "tree.min";
 {/if}
-{/block}
-{block name=javascriptmodules}
-GitPHPJSModules = ['tree'];
 {/block}
 
 {block name=main}
@@ -21,7 +19,6 @@ GitPHPJSModules = ['tree'];
  {* Nav *}
    <div class="page_nav">
      {include file='nav.tpl' current='tree' logcommit=$commit}
-     <br /><br />
    </div>
 
  {include file='title.tpl' titlecommit=$commit}

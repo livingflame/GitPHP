@@ -10,54 +10,32 @@
 class GitPHP_MemoryCache
 {
 	/**
-	 * Stores the singleton instance
-	 * @deprected
-	 */
-	protected static $instance;
-
-	/**
 	 * Stores the objects in this cache
+	 *
+	 * @var array
 	 */
 	protected $objects = array();
 
 	/**
 	 * Whether the cache will automatically manage the number of items
+	 *
+	 * @var boolean
 	 */
 	protected $autoManaged = true;
 
 	/**
 	 * Stores the last project that stored into this cache
+	 *
 	 * @var string
 	 */
 	protected $lastProject;
 
 	/**
 	 * Size of cache
+	 *
+	 * @var int
 	 */
 	protected $size;
-
-	/**
-	 * Returns the singleton instance
-	 * @deprecated
-	 *
-	 * @return mixed instance of config class
-	 */
-	public static function GetInstance()
-	{
-		if (!self::$instance) {
-			self::$instance = new GitPHP_MemoryCache();
-		}
-		return self::$instance;
-	}
-
-	/**
-	 * Releases the singleton instance
-	 * @deprecated
-	 */
-	public static function DestroyInstance()
-	{
-		self::$instance = null;
-	}
 
 	/**
 	 * Class constructor
@@ -67,10 +45,6 @@ class GitPHP_MemoryCache
 	public function __construct($size = 0)
 	{
 		$this->size = $size;
-
-		if (!self::$instance) {
-			self::$instance = $this;
-		}
 	}
 
 	/**

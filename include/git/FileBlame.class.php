@@ -145,7 +145,7 @@ class GitPHP_FileBlame
 		$args[] = '--';
 		$args[] = $this->path;
 
-		$blamelines = explode("\n", $this->exe->Execute($this->project->GetPath(), GIT_BLAME, $args));
+		$blamelines = $this->exe->Execute($this->project->GetPath(), GIT_BLAME, $args);
 
 		$lastcommit = '';
 		foreach ($blamelines as $line) {

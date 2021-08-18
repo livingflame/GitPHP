@@ -75,76 +75,18 @@ class GitPHP_Archive_Gzip implements GitPHP_ArchiveStrategy_Interface
 			return true;
 		}
 
+		$hash = $archive->GetObject()->GetHash();
+		$file = $archive->GetCacheDir() . $archive->GetFilename();
+		if(!is_dir(dirname($file))){
+			mkdir(dirname($file), 0777, true);
+		}
+
 		$args = array();
-		$args[] = '--format=tar';
-		$args[] = "--prefix='" . $archive->GetPrefix() . "'";
-		$args[] = $archive->GetObject()->GetHash();
+		$args[] = '--format=tar.gz';
+		$args[] = '--output=' . escapeshellarg($file);
+		$args[] = $hash;
 
-		$this->handle = $this->exe->Open($archive->GetProject()->GetPath(), GIT_ARCHIVE, $args);
-
-		// hack to get around the fact that gzip files
-		// can't be compressed on the fly and the php zlib stream
-		// doesn't seem to daisy chain with any non-file streams
-
-		$this->tempfile = tempnam(sys_get_temp_dir(), "GitPHP");
-
-		$mode = 'wb';
-		if ($this->compressLevel)
-			$mode .= $this->compressLevel;
-
-		$temphandle = gzopen($this->tempfile, $mode);
-		if ($temphandle) {
-			while (!feof($this->handle)) {
-				gzwrite($temphandle, fread($this->handle, 1048576));
-			}
-			gzclose($temphandle);
-
-			$temphandle = fopen($this->tempfile, 'rb');
-		}
-		
-		if ($this->handle) {
-			pclose($this->handle);
-		}
-
-		$this->handle = $temphandle;
-
-		return ($this->handle !== false);
-	}
-
-	/**
-	 * Read a chunk of the archive data
-	 *
-	 * @param int $size size of data to read
-	 * @return string|boolean archive data or false
-	 */
-	public function Read($size = 1048576)
-	{
-		if (!$this->handle)
-			return false;
-
-		if (feof($this->handle))
-			return false;
-
-		return fread($this->handle, $size);
-	}
-
-	/**
-	 * Close archive descriptor
-	 */
-	public function Close()
-	{
-		if (!$this->handle)
-			return true;
-
-		fclose($this->handle);
-		if (!empty($this->tempfile)) {
-			unlink($this->tempfile);
-			$this->tempfile = '';
-		}
-
-		$this->handle = null;
-
-		return true;
+		return $this->exe->ShellExecute($archive->GetProject()->GetPath(), GIT_ARCHIVE, $args);
 	}
 
 	/**

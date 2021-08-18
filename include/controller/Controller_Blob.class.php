@@ -86,17 +86,15 @@ class GitPHP_Controller_Blob extends GitPHP_ControllerBase
 					}
 
 					$blob = $this->GetProject()->GetObjectManager()->GetBlob($this->params['hash']);
-					if ($blob) {
-						if (isset($this->params['file']))
-							$blob->SetPath($this->params['file']);
+					if (!empty($this->params['file']))
+						$blob->SetPath($this->params['file']);
 
-						$mimeReader = new GitPHP_FileMimeTypeReader($blob, $this->GetMimeStrategy());
-						$mime = $mimeReader->GetMimeType();
-					}
+					$mimeReader = new GitPHP_FileMimeTypeReader($blob, $this->GetMimeStrategy());
+					$mime = $mimeReader->GetMimeType();
 				}
 
-				if (strpos($mime,"text") === false)
-					$headers[] = "Content-type: " . $mime;
+				if ($mime)
+					$headers[] = "Content-type: $mime; charset=UTF-8";
 				else
 					$headers[] = "Content-type: text/plain; charset=UTF-8";
 
@@ -118,6 +116,7 @@ class GitPHP_Controller_Blob extends GitPHP_ControllerBase
 	 */
 	protected function LoadData()
 	{
+		
 		$commit = $this->GetProject()->GetCommit($this->params['hashbase']);
 		$this->tpl->assign('commit', $commit);
 
@@ -139,60 +138,62 @@ class GitPHP_Controller_Blob extends GitPHP_ControllerBase
 		if ($this->Plain()) {
 			return;
 		}
-
+        $mime = NULL;
+        $datatag = false;
+		
+        $data = false;
 		$head = $this->GetProject()->GetHeadCommit();
 		$this->tpl->assign('head', $head);
+        $this->tpl->assign('file', $this->params['file']);
+        
+        $file_mime = $this->GetProject()->GetObjectManager()->getFileMime($this->params['file']);
+		$isPicture = $file_mime->isImage();
+        $this->tpl->assign('is_text', $file_mime->isText());
+        $this->tpl->assign('is_audio', $file_mime->isAudio());
+        $this->tpl->assign('is_video', $file_mime->isVideo());
+		$this->tpl->assign('picture', $isPicture);
+		$this->tpl->assign('mime', $file_mime->getContentType());
 
-		$isPicture = false;
-		if ($this->config->GetValue('filemimetype')) {
-			$mimeReader = new GitPHP_FileMimeTypeReader($blob, $this->GetMimeStrategy());
-			$mimetype = $mimeReader->GetMimeType(true);
-			if ($mimetype == 'image') {
-				$this->tpl->assign('datatag', true);
-				$this->tpl->assign('mime', $mimeReader->GetMimeType());
-				$this->tpl->assign('data', base64_encode($blob->GetData()));
-				return;
-			}
-		}
-
-		// Alternate system to display pictures (not embedded in HTML as base64)
-		$mimetype = GitPHP_Mime::FileMime($this->params['file'], true);
-		$isPicture = ($mimetype == 'image');
-		if ($isPicture) {
-			$this->tpl->assign('file', $this->params['file']);
-			$this->tpl->assign('picture', $isPicture);
+		if($isPicture){
 			return;
-		}
+		} 
 
-		if ($this->config->GetValue('geshi')) {
-			include_once(GITPHP_GESHIDIR . "geshi.php");
-			//include_once(GitPHP_Util::AddSlash($this->config->GetValue('geshiroot', GITPHP_GESHIDIR)) . "geshi.php");
-			if (class_exists('GeSHi')) {
-				$geshi = new GeSHi("",'php');
-				if ($geshi) {
-					$lang = GitPHP_Util::GeshiFilenameToLanguage($blob->GetName());
-					if (empty($lang)) {
-						$lang = $geshi->get_language_name_from_extension(substr(strrchr($blob->GetName(),'.'),1));
-					}
-					if (!empty($lang)) {
-						$geshi->enable_classes();
-						$geshi->enable_strict_mode(GESHI_MAYBE);
-						$geshi->set_source($blob->GetData());
-						$geshi->set_language($lang);
-						$geshi->set_header_type(GESHI_HEADER_PRE_TABLE);
-						$geshi->enable_line_numbers(GESHI_NORMAL_LINE_NUMBERS);
-						$geshi->set_overall_id('blobData');
-						$this->tpl->assign('geshiout', $geshi->parse_code());
-						$this->tpl->assign('fixupjs',  $this->config->GetValue('fixupjs', ''));
-						$this->tpl->assign('geshicss', $geshi->get_stylesheet());
-						$this->tpl->assign('geshi', true);
-						return;
+		if($file_mime->isText()){
+			if ($this->config->GetValue('geshi')) {
+				include_once(GITPHP_GESHIDIR . "geshi.php");
+				if (class_exists('GeSHi')) {
+					$geshi = new GeSHi("");
+					if ($geshi) {
+						$lang = GitPHP_Util::GeshiFilenameToLanguage($blob->GetName());
+						if (empty($lang)) {
+							$lang = $geshi->get_language_name_from_extension(substr(strrchr($blob->GetName(),'.'),1));
+						}
+						if (!empty($lang)) {
+							$geshi->enable_classes();
+							$geshi->set_source($blob->GetData());
+							$geshi->set_language($lang);
+							$geshi->set_header_type(GESHI_HEADER_PRE_TABLE);
+							$geshi->enable_line_numbers(GESHI_NORMAL_LINE_NUMBERS);
+							$geshi->set_overall_id('blobData');
+							$this->tpl->assign('geshiout', $geshi->parse_code());
+							$this->tpl->assign('geshicss', $geshi->get_stylesheet());
+							$this->tpl->assign('geshi', true);
+							return;
+						}
 					}
 				}
 			}
-		}
+			
+			$ace_mode = $file_mime->getAceModeForPath();
+			if($ace_mode !== null){
+				$this->tpl->assign('ace_mode', $ace_mode['mode']);
+				$this->tpl->assign('ace_name', $ace_mode['name']);
+				$this->tpl->assign('data', $blob->GetData());
+				return;
+			}
+        }
+		$this->tpl->assign('bloblines', hex_dump($blob->GetData()));
 
-		$this->tpl->assign('bloblines', $blob->GetData(true));
 	}
 
 	/**

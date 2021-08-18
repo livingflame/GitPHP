@@ -44,31 +44,30 @@
 <div class="title">
   <a href="{geturl project=$project action=commit hash=$commit}" class="title">{$commit->GetTitle()|escape:'html'}</a>
 </div>
+
 {if $results}
 <table>
   {* Print each match *}
-  {foreach from=$results item=result key=path}
+  {foreach from=$results item=result}
     <tr class="{cycle values="light,dark"}">
       {assign var=resultobject value=$result->GetObject()}
-      {assign var=resultpath value=$result->GetPath()}
-      {assign var=wraptext value=160}
       {if $resultobject instanceof GitPHP_Tree}
-      <td>
-        <a href="{geturl project=$project action=tree hash=$resultobject hashbase=$commit file=$resultpath}" class="list"><strong>{$resultpath|highlight:$search}</strong></a>
-      </td>
-      <td class="link">
-        <a href="{geturl project=$project action=tree hash=$resultobject hashbase=$commit file=$resultpath}">{t}tree{/t}</a>
-      </td>
+	      <td>
+		  <a href="{geturl project=$project action=tree hash=$resultobject hashbase=$commit file=$result->GetPath()}" class="list"><strong>{$result->GetPath()|highlight:$search}</strong></a>
+	      </td>
+	      <td class="link">
+		  <a href="{geturl project=$project action=tree hash=$resultobject hashbase=$commit file=$result->GetPath()}">{t}tree{/t}</a>
+	      </td>
       {else}
-      <td>
-        <a href="{geturl project=$project action=blob hash=$resultobject hashbase=$commit file=$resultpath}" class="list"><strong>{$resultpath|highlight:$search}</strong></a>
-        {foreach from=$result->GetMatchingLines() item=line name=match key=lineno}
-          {if $smarty.foreach.match.first}<br />{/if}<span class="matchline">{$lineno}. {$line|highlight:$search:$wraptext:true}</span><br />
-        {/foreach}
-      </td>
-      <td class="link">
-        <a href="{geturl project=$project action=blob hash=$resultobject hashbase=$commit file=$resultpath}">{t}blob{/t}</a> | <a href="{geturl project=$project action=history hash=$commit file=$resultpath}">{t}history{/t}</a>
-      </td>
+	      <td>
+		  <a href="{geturl project=$project action=blob hash=$resultobject hashbase=$commit file=$result->GetPath()}" class="list"><strong>{$result->GetPath()|highlight:$search}</strong></a>
+		  {foreach from=$result->GetMatchingLines() item=line name=match key=lineno}
+		    {if $smarty.foreach.match.first}<br />{/if}<span class="matchline">{$lineno}. {$line|highlight:$search:50:true}</span><br />
+		  {/foreach}
+	      </td>
+	      <td class="link">
+		  <a href="{geturl project=$project action=blob hash=$resultobject hashbase=$commit file=$result->GetPath()}">{t}blob{/t}</a> | <a href="{geturl project=$project action=history hash=$commit file=$result->GetPath()}">{t}history{/t}</a>
+	      </td>
       {/if}
     </tr>
   {/foreach}

@@ -13,20 +13,19 @@ class GitPHP_Head extends GitPHP_Ref
 	/**
 	 * Instantiates head
 	 *
-	 * @param mixed $project the project
+	 * @param GitPHP_Project $project the project
 	 * @param string $head head name
 	 * @param string $headHash head hash
-	 * @throws Exception exception on invalid head or hash
 	 */
-	public function __construct($project, $head, $headHash = '', $refDir='heads')
+	public function __construct($project, $head, $headHash = '')
 	{
-		parent::__construct($project, $refDir, $head, $headHash);
+		parent::__construct($project, 'heads', $head, $headHash);
 	}
 
 	/**
 	 * Gets the commit for this head
 	 *
-	 * @return mixed commit object for this tag
+	 * @return GitPHP_Commit commit object for this head
 	 */
 	public function GetCommit()
 	{
@@ -36,8 +35,8 @@ class GitPHP_Head extends GitPHP_Ref
 	/**
 	 * Compares two heads by age
 	 *
-	 * @param mixed $a first head
-	 * @param mixed $b second head
+	 * @param GitPHP_Head $a first head
+	 * @param GitPHP_Head $b second head
 	 * @return integer comparison result
 	 */
 	public static function CompareAge($a, $b)
@@ -50,15 +49,12 @@ class GitPHP_Head extends GitPHP_Ref
 	/**
 	 * Generates a head hash key
 	 *
-	 * @param mixed $proj project
+	 * @param string $proj project
 	 * @param string $head head name
 	 * @return string cache key
 	 */
 	public static function CacheKey($proj, $head)
 	{
-		if (is_object($proj))
-			return 'project|' . $proj->GetProject . '|head|' . $head;
-
 		return 'project|' . $proj . '|head|' . $head;
 	}
 

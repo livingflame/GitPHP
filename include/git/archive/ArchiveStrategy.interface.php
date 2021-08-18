@@ -25,19 +25,6 @@ interface GitPHP_ArchiveStrategy_Interface
 	public function Open($archive);
 
 	/**
-	 * Read a chunk of the archive data
-	 *
-	 * @param int $size size of data to read
-	 * @return string|boolean archive data or false
-	 */
-	public function Read($size = 1048576);
-
-	/**
-	 * Close archive descriptor
-	 */
-	public function Close();
-
-	/**
 	 * Gets the file extension for this format
 	 *
 	 * @return string extension

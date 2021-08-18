@@ -9,21 +9,34 @@
  */
 class GitPHP_Controller_Search extends GitPHP_ControllerBase
 {
-	/**
-	 * Constants for the various search types
-	 */
-	const CommitSearch = 'commit';
-	const AuthorSearch = 'author';
-	const CommiterSearch = 'committer';
-	const FileSearch = 'file';
 
 	/**
-	 * Search types (standard style)
+	 * Commit search type
+	 *
+	 * @var string
 	 */
-	const SEARCH_COMMIT = 'commit';
-	const SEARCH_AUTHOR = 'author';
-	const SEARCH_COMMITTER = 'committer';
-	const SEARCH_FILE = 'file';
+	const CommitSearch = 'commit';
+
+	/**
+	 * Author search type
+	 *
+	 * @var string
+	 */
+	const AuthorSearch = 'author';
+
+	/**
+	 * Committer search type
+	 *
+	 * @var string
+	 */
+	const CommitterSearch = 'committer';
+
+	/**
+	 * File search type
+	 *
+	 * @var string
+	 */
+	const FileSearch = 'file';
 
 	/**
 	 * Initialize controller
@@ -31,6 +44,7 @@ class GitPHP_Controller_Search extends GitPHP_ControllerBase
 	public function Initialize()
 	{
 		parent::Initialize();
+
 		if (!$this->config->GetValue('search')) {
 			throw new GitPHP_SearchDisabledException();
 		}
@@ -41,19 +55,18 @@ class GitPHP_Controller_Search extends GitPHP_ControllerBase
 			$this->params['page'] = 0;
 
 		if (!isset($this->params['searchtype']))
-			$this->params['searchtype'] = self::SEARCH_COMMIT;
+			$this->params['searchtype'] = GitPHP_Controller_Search::CommitSearch;
 
-		if ($this->params['searchtype'] == self::SEARCH_FILE) {
+		if ($this->params['searchtype'] == GitPHP_Controller_Search::FileSearch) {
 			if (!$this->config->GetValue('filesearch')) {
 				throw new GitPHP_SearchDisabledException(true);
 			}
+
 		}
 
-		if (($this->params['searchtype'] !== self::SEARCH_AUTHOR)
-		 && ($this->params['searchtype'] !== self::SEARCH_COMMITTER)
-		 && ($this->params['searchtype'] !== self::SEARCH_COMMIT)
-		 && ($this->params['searchtype'] !== self::SEARCH_FILE))
+		if (($this->params['searchtype'] !== GitPHP_Controller_Search::AuthorSearch) && ($this->params['searchtype'] !== GitPHP_Controller_Search::CommitterSearch) && ($this->params['searchtype'] !== GitPHP_Controller_Search::CommitSearch) && ($this->params['searchtype'] !== GitPHP_Controller_Search::FileSearch)) {
 			throw new GitPHP_InvalidSearchTypeException();
+		}
 
 		if ((!isset($this->params['search'])) || (strlen($this->params['search']) < 2)) {
 			throw new GitPHP_SearchLengthException(2);
@@ -67,7 +80,7 @@ class GitPHP_Controller_Search extends GitPHP_ControllerBase
 	 */
 	protected function GetTemplate()
 	{
-		if ($this->params['searchtype'] == self::SEARCH_FILE) {
+		if ($this->params['searchtype'] == GitPHP_Controller_Search::FileSearch) {
 			return 'searchfiles.tpl';
 		}
 		return 'search.tpl';
@@ -110,31 +123,31 @@ class GitPHP_Controller_Search extends GitPHP_ControllerBase
 
 		$this->tpl->assign('commit', $co);
 
-		$results = array();
 		$skip = $this->params['page'] * 100;
 
-		$exe = GitPHP_GitExe::GetInstance();
+		$results = null;
 
 		switch ($this->params['searchtype']) {
 
-			case self::SEARCH_COMMIT:
-				$results = new GitPHP_CommitSearch($this->GetProject(), GitPHP_CommitSearch::CommitType, $this->params['search'], $exe, $co, 101, $skip);
+			case GitPHP_Controller_Search::AuthorSearch:
+				$results = new GitPHP_CommitSearch($this->GetProject(), GitPHP_CommitSearch::AuthorType, $this->params['search'], $this->exe, $co, 101, $skip);
 				break;
-			case self::SEARCH_AUTHOR:
-				$results = new GitPHP_CommitSearch($this->GetProject(), GitPHP_CommitSearch::AuthorType, $this->params['search'], $exe, $co, 101, $skip);
+
+			case GitPHP_Controller_Search::CommitterSearch:
+				$results = new GitPHP_CommitSearch($this->GetProject(), GitPHP_CommitSearch::CommitterType, $this->params['search'], $this->exe, $co, 101, $skip);
 				break;
-			case self::SEARCH_COMMITTER:
-				$results = new GitPHP_CommitSearch($this->GetProject(), GitPHP_CommitSearch::CommitterType, $this->params['search'], $exe, $co, 101, $skip);
+
+			case GitPHP_Controller_Search::CommitSearch:
+				$results = new GitPHP_CommitSearch($this->GetProject(), GitPHP_CommitSearch::CommitType, $this->params['search'], $this->exe, $co, 101, $skip);
 				break;
-			case self::SEARCH_FILE:
+
+			case GitPHP_Controller_Search::FileSearch:
 				$results = new GitPHP_FileSearch($this->GetProject(), $co->GetTree(), $this->params['search'], $this->exe, 101, $skip);
 				break;
-			default:
-				throw new GitPHP_MessageException(__('Invalid search type'));
 		}
 
-		if ($results->GetCount() < 1) {
-			throw new GitPHP_MessageException(sprintf(__('No matches for "%1$s"'), $this->params['search']), false);
+		if ($results->GetCount() > 0) {
+			$this->tpl->assign('results', $results);
 		}
 
 		if ($results->GetCount() > 100) {
@@ -142,12 +155,10 @@ class GitPHP_Controller_Search extends GitPHP_ControllerBase
 			$results->SetLimit(100);
 		}
 
-		$this->tpl->assign('results', $results);
-
 		$this->tpl->assign('tree', $co->GetTree());
 
 		$this->tpl->assign('page', $this->params['page']);
 
 	}
-
+	
 }
