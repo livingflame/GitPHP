@@ -206,13 +206,6 @@ class GitPHP_ProjectListManifest extends GitPHP_ProjectListBase
 							$projObj->SetCloneUrl($remoteUrl);
 						}
 
-						//gerrit
-						/* $remoteUrl = @ $remotes[$remoteName]['review'];
-						if (!empty($remoteUrl)) {
-							//$remoteUrl .= '/#q,project:'.$repository['name'];
-							$projObj->SetBugUrl($remoteUrl);
-						} */
-
 						$this->projects[$projPath] = $projObj;
 						unset($projObj);
 					}
