@@ -16,24 +16,24 @@
     {block name=feeds}{/block}
     {block name=links}{/block}
     {if file_exists('css/gitphp.min.css')}
-    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/gitphp.min.css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/assets/css/gitphp.min.css" />
     {else}
-    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/gitphp.css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/assets/css/gitphp.css" />
     {/if}
-    {if file_exists("css/$stylesheet.min.css")}
-    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/{$stylesheet}.min.css" />
+    {if file_exists("assets/css/$stylesheet.min.css")}
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/assets/css/{$stylesheet}.min.css" />
     {else}
-    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/{$stylesheet}.css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/assets/css/{$stylesheet}.css" />
     {/if}
-    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/ext/jquery.qtip.min.css" />
-    <link type="text/css" rel="stylesheet" href="{$baseurl}/css/all.min.css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/assets/css/ext/jquery.qtip.min.css" />
+    <link type="text/css" rel="stylesheet" href="{$baseurl}/assets/css/all.min.css" />
     {block name=css}
     {/block}
 
     {if $javascript}
     <script type="text/javascript">
     var require = {
-    	baseUrl: '{$baseurl}/js',
+    	baseUrl: '{$baseurl}/assets/js',
 	paths: {
 		jquery: [
 			{if $googlejs}
@@ -80,13 +80,13 @@
 	}
     };
     {block name=javascript}
-      {if file_exists('js/common.min.js')}
+      {if file_exists('assets/js/common.min.js')}
       require.paths.common = 'common.min';
       {/if}
       require.deps = ['common'];
     {/block}
     </script>
-    <script type="text/javascript" src="{$baseurl}/js/ext/require.js"></script>
+    <script type="text/javascript" src="{$baseurl}/assets/js/ext/require.js"></script>
     {/if}
   </head>
   <body>
