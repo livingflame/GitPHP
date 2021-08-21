@@ -2021,6 +2021,9 @@ class GitPHP_Mime
                 break;
             }
         }
+		if($mode === null && ($this->filename === 'README' || $this->filename === 'readme')){
+			$mode = $supported_ace_modes['markdown'];
+		}
         return $mode;
     }
 

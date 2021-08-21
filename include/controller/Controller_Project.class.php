@@ -132,12 +132,14 @@ class GitPHP_Controller_Project extends GitPHP_ControllerBase
 			$file_mime = $this->GetProject()->GetObjectManager()->getFileMime($file);
 			$ace_mode_name = null;
 			$ace_mode_mode = null;
-			if($file_mime->isText()){
-				$ace_mode = $file_mime->getAceModeForPath();
-				if($ace_mode !== null){
-					$ace_mode_name = $ace_mode['name'];
-					$ace_mode_mode = $ace_mode['mode'];
-				}
+			$ace_mode = $file_mime->getAceModeForPath();
+			if($ace_mode !== null){
+				$ace_mode_name = $ace_mode['name'];
+				$ace_mode_mode = $ace_mode['mode'];
+			}
+			if($ace_mode_name === null){
+				$ace_mode_name = "text";
+				$ace_mode_mode = "ace/mode/text";
 			}
 			$this->tpl->assign('ace_name', $ace_mode_name);
 			$this->tpl->assign('ace_mode', $ace_mode_mode);
