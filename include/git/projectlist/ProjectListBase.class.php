@@ -379,13 +379,13 @@ abstract class GitPHP_ProjectListBase implements Iterator, GitPHP_Observable_Int
 			$project->SetCategory($config->GetValue('gitphp.category'));
 		}
 
-		if ($config->HasValue('gitphp.cloneurl')) {
-			$project->SetCloneUrl($config->GetValue('gitphp.cloneurl'));
-		}
+		//if ($config->HasValue('gitphp.cloneurl')) {
+		//	$project->SetCloneUrl($config->GetValue('gitphp.cloneurl'));
+		//}
 
-		if ($config->HasValue('gitphp.pushurl')) {
-			$project->SetPushUrl($config->GetValue('gitphp.pushurl'));
-		}
+		//if ($config->HasValue('gitphp.pushurl')) {
+		//	$project->SetPushUrl($config->GetValue('gitphp.pushurl'));
+		//}
 
 		if ($config->HasValue('gitphp.bugurl')) {
 			$project->SetBugUrl($config->GetValue('gitphp.bugurl'));
@@ -426,13 +426,13 @@ abstract class GitPHP_ProjectListBase implements Iterator, GitPHP_Observable_Int
 		if (!$this->config)
 			return;
 
-		if ($this->config->GetValue('cloneurl')) {
-			$project->SetCloneUrl(GitPHP_Util::AddSlash($this->config->GetValue('cloneurl'), false) . $project->GetProject());
-		}
+		//if ($this->config->GetValue('cloneurl')) {
+		//	$project->SetCloneUrl(GitPHP_Util::AddSlash($this->config->GetValue('cloneurl'), false) . $project->GetProject());
+		//}
 
-		if ($this->config->GetValue('pushurl')) {
-			$project->SetPushUrl(GitPHP_Util::AddSlash($this->config->GetValue('pushurl'), false) . $project->GetProject());
-		}
+		//if ($this->config->GetValue('pushurl')) {
+		//	$project->SetPushUrl(GitPHP_Util::AddSlash($this->config->GetValue('pushurl'), false) . $project->GetProject());
+		//}
 
 		if ($this->config->GetValue('bugpattern')) {
 			$project->SetBugPattern($this->config->GetValue('bugpattern'));
@@ -615,12 +615,12 @@ abstract class GitPHP_ProjectListBase implements Iterator, GitPHP_Observable_Int
 		if (isset($projData['description']) && is_string($projData['description'])) {
 			$project->SetDescription($projData['description']);
 		}
-		if (isset($projData['cloneurl']) && is_string($projData['cloneurl'])) {
-			$project->SetCloneUrl($projData['cloneurl']);
-		}
-		if (isset($projData['pushurl']) && is_string($projData['pushurl'])) {
-			$project->SetPushUrl($projData['pushurl']);
-		}
+		//if (isset($projData['cloneurl']) && is_string($projData['cloneurl'])) {
+		//	$project->SetCloneUrl($projData['cloneurl']);
+		//}
+		//if (isset($projData['pushurl']) && is_string($projData['pushurl'])) {
+		//	$project->SetPushUrl($projData['pushurl']);
+		//}
 		if (isset($projData['bugpattern']) && is_string($projData['bugpattern'])) {
 			$project->SetBugPattern($projData['bugpattern']);
 		}

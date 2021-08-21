@@ -1,0 +1,7 @@
+# Log files
+*.log
+logs.txt
+
+# Directories
+templates_c/*
+cache/*

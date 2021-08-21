@@ -369,9 +369,6 @@ class GitPHP_Project
 					$this->description = $config->GetValue('remote.'.$remote.'.url');
 				}
 
-				if (empty($this->description)) {
-					$this->description = $this->GetCloneUrl();
-				}
 
 				if (empty($this->description)) {
 					$this->description = '-';

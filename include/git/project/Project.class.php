@@ -53,6 +53,19 @@ class GitPHP_Project
 	protected $readDescription = false;
 
 	/**
+	 * The project config
+	 *
+	 * @var string
+	 */
+	protected $project_config;
+
+	/**
+	 * Whether the project config has been read from the file yet
+	 *
+	 * @var boolean
+	 */
+	protected $read_project_config = false;
+	/**
 	 * The category
 	 *
 	 * @var string
@@ -369,6 +382,23 @@ class GitPHP_Project
 	}
 
 	/**
+	 * Gets the project config
+	 *
+	 * @return array project config
+	 */
+	public function GetProjectConfig()
+	{
+		if (!$this->read_project_config) {
+			if (file_exists($this->GetPath() . '/config')) {
+				$this->project_config = parse_ini_file($this->GetPath() . '/config',true);
+			}
+			$this->read_project_config = true;
+		}
+
+		return $this->project_config;
+	}
+
+	/**
 	 * Gets the project description
 	 *
 	 * @param $trim length to trim description to (0 for no trim)
@@ -446,13 +476,19 @@ class GitPHP_Project
 	 */
 	public function GetCloneUrl()
 	{
-		if ($this->cloneUrl !== null)
+		
+		if ($this->cloneUrl !== null) {
 			return $this->cloneUrl;
-		$cloneurl = GitPHP_Util::AddSlash($this->config->GetValue('cloneurl', ''), false);
-		if (!empty($cloneurl))
-			$cloneurl .= $this->project;
+		}
+		$project_config = $this->GetProjectConfig();
 
-		return $cloneurl;
+		if(!empty($project_config["remote origin"])){
+			$remote_origin = $project_config["remote origin"];
+			$this->cloneUrl = $remote_origin['url'];
+			return $this->cloneUrl;
+		}
+
+		return $this->GetPath();
 	}
 
 	/**
@@ -472,14 +508,20 @@ class GitPHP_Project
 	 */
 	public function GetPushUrl()
 	{
-		if ($this->pushUrl !== null)
+		if ($this->pushUrl !== null) {
 			return $this->pushUrl;
+		}
+			
+		$project_config = $this->GetProjectConfig();
+
+		if(!empty($project_config["remote origin"])){
+			$remote_origin = $project_config["remote origin"];
+			$this->pushUrl = $remote_origin['url'];
+			return $this->pushUrl;
+		}
+		$pushurl = $this->GetPath();
         
-		$pushurl = GitPHP_Util::AddSlash($this->config->GetValue('pushurl', ''), false);
-		if (!empty($pushurl))
-			$pushurl .= $this->project;
-        
-		return $this->pushUrl;
+		return $pushurl;
 	}
 
 	/**
