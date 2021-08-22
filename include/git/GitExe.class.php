@@ -150,7 +150,6 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 		}
 
 		$fullCommand = $this->CreateCommand($projectPath, $command, $args);
-		file_put_contents( GITPHP_BASEDIR . 'logs.txt', $fullCommand . "\n", FILE_APPEND );
 		$this->Log('Begin executing "' . $fullCommand . '"');
 		$ret = exec($fullCommand,$output);
 		$ret = null;
@@ -178,7 +177,6 @@ class GitPHP_GitExe implements GitPHP_Observable_Interface
 		}
 
 		$fullCommand = $this->CreateCommand($projectPath, $command, $args);
-		file_put_contents( GITPHP_BASEDIR . 'logs.txt', $fullCommand . "\n", FILE_APPEND );
 		$this->Log('Begin executing "' . $fullCommand . '"');
 		$ret = shell_exec($fullCommand);
 		$this->Log('Finish executing "' . $fullCommand . '"' . "\nwith result: " . $ret);
