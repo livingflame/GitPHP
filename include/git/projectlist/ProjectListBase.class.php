@@ -379,14 +379,6 @@ abstract class GitPHP_ProjectListBase implements Iterator, GitPHP_Observable_Int
 			$project->SetCategory($config->GetValue('gitphp.category'));
 		}
 
-		//if ($config->HasValue('gitphp.cloneurl')) {
-		//	$project->SetCloneUrl($config->GetValue('gitphp.cloneurl'));
-		//}
-
-		//if ($config->HasValue('gitphp.pushurl')) {
-		//	$project->SetPushUrl($config->GetValue('gitphp.pushurl'));
-		//}
-
 		if ($config->HasValue('gitphp.bugurl')) {
 			$project->SetBugUrl($config->GetValue('gitphp.bugurl'));
 		}

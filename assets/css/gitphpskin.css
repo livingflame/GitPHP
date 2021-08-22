@@ -173,8 +173,10 @@ display:inline-block;
  * Table displays
  */
 table { 
+	width: 100%;
+	table-layout: fixed;
+	border-spacing: 0;
 	padding: 8px 4px; 
-
 }
 
 th { 
@@ -205,11 +207,13 @@ td {
 
 td.link { 
 	/* navigation links on the right side of each row */
-	padding: 2px 5px; 
-	font-family: sans-serif; 
-	font-size: 10px; 
+	padding: 2px 5px;
+	width: 200px;
 }
-
+td.link .snapshotTip{
+	float:none;
+	padding-left:0;
+}
 
 /*
  * Messages
@@ -690,8 +694,13 @@ table.tagTable td.link {
     -webkit-transform: scaleX(1) scaleY(1) scaleZ(1);
     transform: scaleX(1) scaleY(1) scaleZ(1);
 }
-.picture img{max-width:100%;}
-.col_icon{text-align:center;}
+.picture img{
+	max-width:100%;
+}
+.col_icon{
+	text-align:center;
+    width: 15px;
+}
 a.no_text_decore{
 	text-decoration: none;
 	color:#000000;
@@ -699,3 +708,80 @@ a.no_text_decore{
 .highlight{
 	padding:8px;
 }
+.perms{
+	width:80px;
+}
+
+.table--reponsive {
+	border-collapse: collapse;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	table-layout: fixed;
+  }
+  
+  .table--reponsive caption {
+	font-size: 1.5em;
+	margin: .5em 0 .75em;
+  }
+  
+  .table--reponsive tr {
+	background-color: #f8f8f8;
+	padding: .35em;
+  }
+  
+  .table--reponsive th {
+	font-size: .85em;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+  }
+  
+  @media screen and (max-width: 768px) {
+	.table--reponsive {
+	  border: 0;
+	}
+  
+	.table--reponsive caption {
+	  font-size: 1.3em;
+	}
+	
+	.table--reponsive thead {
+	  border: none;
+	  clip: rect(0 0 0 0);
+	  height: 1px;
+	  margin: -1px;
+	  overflow: hidden;
+	  padding: 0;
+	  position: absolute;
+	  width: 1px;
+	}
+	
+	.table--reponsive tr {
+		border: 1px solid #ddd;
+	  border-bottom-width: 3px;
+	  display: block;
+	  margin-bottom: .625em;
+	}
+	
+	.table--reponsive td {
+	  border-bottom: 1px solid #ddd;
+	  display: block;
+	  text-align: right;
+	  width:auto;
+	}
+	
+	.table--reponsive td::before {
+	  /*
+	  * aria-label has no advantage, it won't be read inside a table
+	  content: attr(aria-label);
+	  */
+	  content: attr(data-label);
+	  float: left;
+	  font-weight: bold;
+	  text-transform: uppercase;
+	}
+	
+	.table--reponsive td:last-child {
+	  border-bottom: 0;
+	}
+  }

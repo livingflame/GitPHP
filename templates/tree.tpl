@@ -46,7 +46,7 @@ require.paths.tree = "tree.min";
  
  <div class="page_body">
    {* List files *}
-<table class="treeTable">
+<table class="treeTable table--reponsive">
      {include file='treelist.tpl'}
 </table>
 {if $blob}
