@@ -147,6 +147,7 @@ class GitPHP_Controller_Project extends GitPHP_ControllerBase
 			$this->tpl->assign('bloblines', hex_dump($blob->GetData()));		
 		}
 		$this->tpl->assign('blob', $blob);
+		$this->tpl->assign('file', $file);
 	}
 
 }

@@ -14,7 +14,7 @@
  */
 body {
 	font-family: sans-serif;
-	font-size: 12px;
+	font-size: 14px;
 	border: solid #d9d8d1;
 	border-width: 1px;
 	margin: 10px;
@@ -174,6 +174,7 @@ display:inline-block;
  */
 table { 
 	padding: 8px 4px; 
+
 }
 
 th { 
@@ -291,6 +292,7 @@ td.link {
 	font-weight: bold; 
 	text-decoration: none; 
 	color: #000000;
+	padding-left:0;
 }
 
 .title:hover { 
@@ -303,7 +305,10 @@ td.link {
 	border-width: 0px 0px 1px; 
 }
 
-.title .snapshotTip{float:right;padding-left:8px;}
+.snapshotTip{
+	float:right;
+	padding-left:8px;
+}
 /*
  * Search box
  */
@@ -687,3 +692,10 @@ table.tagTable td.link {
 }
 .picture img{max-width:100%;}
 .col_icon{text-align:center;}
+a.no_text_decore{
+	text-decoration: none;
+	color:#000000;
+}
+.highlight{
+	padding:8px;
+}

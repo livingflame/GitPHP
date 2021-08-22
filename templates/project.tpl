@@ -35,7 +35,7 @@ require.deps = deps;
  <br /><br />
  </div>
 
- {include file='title.tpl'}
+ {include file='title.tpl' target='summary'}
 
  {* Project brief *}
  <table>
@@ -55,14 +55,6 @@ require.deps = deps;
    {/if}
  </table>
 
- {if !$head}
-   {include file='title.tpl' target='shortlog' disablelink=true}
- {else}
-   {include file='title.tpl' target='shortlog'}
- {/if}
-
- {include file='shortloglist.tpl' source='summary'}
- 
  {if $taglist}
   
   {include file='title.tpl' target='tags'}
@@ -85,7 +77,16 @@ require.deps = deps;
   {include file='remotelist.tpl' source='summary'}
 
  {/if}
+ 
+ {include file='title.tpl' pathobject=$tree target='blobplain'}
+{include file='path.tpl' titlecommit=$head target='blobplain'}
+ 
+   {* List files *}
+<table class="treeTable">
+     {include file='treelist.tpl'}
+</table>
 {if $blob}
+{include file='title.tpl' pathobject=$blob target='blob'}
   {if $ace_mode}
     <div class="highlight" data-ace-mode="{$ace_mode}" data-ace-theme="ace/theme/github" data-ace-gutter="true">{$data|e|echobig}</div>
   {else}

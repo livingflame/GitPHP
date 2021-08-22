@@ -95,6 +95,56 @@ class GitPHP_Controller_Tree extends GitPHP_ControllerBase
 			$tree->SetPath($this->params['file']);
 		}
 		$this->tpl->assign('tree', $tree);
+
+		$hash = null;
+		$file = null;
+		$files = array(
+			'readme.md',
+			'README.md',
+			'README.txt',
+			'readme.txt',
+			'README',
+			'readme'
+		);
+		foreach($files as $file_name){
+			
+			if($tree->PathToHash($file_name)){
+				$hash = $tree->PathToHash($file_name);
+				$file = $file_name;
+				break;
+			}
+		}
+		
+		$blob = null;
+		if($hash){
+			
+			$blob = $this->GetProject()->GetObjectManager()->GetBlob($hash);
+			
+			if (!empty($file)){
+				$blob->SetPath($file);
+			}
+
+			$blob->SetCommit($commit);
+
+			$file_mime = $this->GetProject()->GetObjectManager()->getFileMime($file);
+			$ace_mode_name = null;
+			$ace_mode_mode = null;
+			$ace_mode = $file_mime->getAceModeForPath();
+			if($ace_mode !== null){
+				$ace_mode_name = $ace_mode['name'];
+				$ace_mode_mode = $ace_mode['mode'];
+			}
+			if($ace_mode_name === null){
+				$ace_mode_name = "text";
+				$ace_mode_mode = "ace/mode/text";
+			}
+			$this->tpl->assign('ace_name', $ace_mode_name);
+			$this->tpl->assign('ace_mode', $ace_mode_mode);
+			$this->tpl->assign('data', $blob->GetData());
+			$this->tpl->assign('bloblines', hex_dump($blob->GetData()));		
+		}
+		$this->tpl->assign('blob', $blob);
+		$this->tpl->assign('file', $file);
 	}
 
 }
