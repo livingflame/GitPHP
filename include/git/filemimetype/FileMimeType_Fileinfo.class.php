@@ -10,22 +10,6 @@
 class GitPHP_FileMimeType_Fileinfo implements GitPHP_FileMimeTypeStrategy_Interface
 {
 
-	/**
-	 * Magic database
-	 *
-	 * @var string
-	 */
-	protected $magicdb = null;
-
-	/**
-	 * Constructor
-	 *
-	 * @param string $magicdb magic db
-	 */
-	public function __construct($magicdb = null)
-	{
-		$this->magicdb = $magicdb;
-	}
 
 	/**
 	 * Gets the mime type for a blob
@@ -61,7 +45,7 @@ class GitPHP_FileMimeType_Fileinfo implements GitPHP_FileMimeTypeStrategy_Interf
 	 */
 	public function Valid()
 	{
-		return function_exists('finfo_buffer') && (($this->magicdb == null) || is_readable($this->magicdb));
+		return class_exists('finfo');
 	}
 
 }

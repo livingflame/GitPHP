@@ -533,7 +533,7 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 	 */
 	public function GetMimeStrategy()
 	{
-		$strategy = new GitPHP_FileMimeType_Fileinfo($this->config->GetValue('magicdb'));
+		$strategy = new GitPHP_FileMimeType_Fileinfo();
 		if ($strategy->Valid())
 			return $strategy;
 
