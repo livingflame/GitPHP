@@ -365,7 +365,7 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 	/**
 	 * Rewinds the iterator
 	 */
-	function rewind()
+	public function rewind()
 	{
 		if (!$this->dataLoaded) {
 			$this->LoadData();
@@ -399,7 +399,7 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 	/**
 	 * Returns the current key
 	 */
-	function key()
+	public function key()
 	{
 		if (!$this->dataLoaded) {
 			$this->LoadData();
@@ -411,7 +411,7 @@ class GitPHP_FileHistory implements Iterator, GitPHP_Pagination_Interface
 	/**
 	 * Advance the pointer
 	 */
-	function next()
+	public function next()
 	{
 		if (!$this->dataLoaded) {
 			$this->LoadData();

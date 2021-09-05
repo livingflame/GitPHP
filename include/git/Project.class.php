@@ -340,15 +340,15 @@ class GitPHP_Project
 
 			$config = $this->GetConfig();
 
-			if ($config->HasValue('gitphp.description')) {
-				$this->description = $config->GetValue('gitphp.description');
-			} else if ($config->HasValue('gitweb.description')) {
-				$this->description = $config->GetValue('gitweb.description');
-			} else if (file_exists($this->GetPath() . '/description')) {
+			if (file_exists($this->GetPath() . '/description')) {
 				$this->description = file_get_contents($this->GetPath() . '/description');
 
 				if (strpos($this->description,'Unnamed repository; edit this file') !== false)
 					$this->description = '';
+			} else if ($config->HasValue('gitphp.description')) {
+				$this->description = $config->GetValue('gitphp.description');
+			} else if ($config->HasValue('gitweb.description')) {
+				$this->description = $config->GetValue('gitweb.description');
 			} else {
 				$this->description = '';
 			}
@@ -369,6 +369,9 @@ class GitPHP_Project
 					$this->description = $config->GetValue('remote.'.$remote.'.url');
 				}
 
+				if (empty($this->description)) {	 
+					$this->description = $this->GetCloneUrl();	 
+				}
 
 				if (empty($this->description)) {
 					$this->description = '-';

@@ -126,7 +126,7 @@ class GitPHP_Controller_Tree extends GitPHP_ControllerBase
 
 			$blob->SetCommit($commit);
 
-			$file_mime = $this->GetProject()->GetObjectManager()->getFileMime($file);
+			$file_mime = $this->GetProject()->GetObjectManager()->getFileMime($blob);
 			$ace_mode_name = null;
 			$ace_mode_mode = null;
 			$ace_mode = $file_mime->getAceModeForPath();

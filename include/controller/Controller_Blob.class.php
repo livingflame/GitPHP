@@ -88,8 +88,8 @@ class GitPHP_Controller_Blob extends GitPHP_ControllerBase
 					$blob = $this->GetProject()->GetObjectManager()->GetBlob($this->params['hash']);
 					if (!empty($this->params['file']))
 						$blob->SetPath($this->params['file']);
-
-					$mimeReader = new GitPHP_FileMimeTypeReader($blob, $this->GetMimeStrategy());
+					$mime_strategy = $this->GetProject()->GetObjectManager()->GetMimeStrategy();
+					$mimeReader = new GitPHP_FileMimeTypeReader($blob,$mime_strategy);
 					$mime = $mimeReader->GetMimeType();
 				}
 
@@ -146,7 +146,7 @@ class GitPHP_Controller_Blob extends GitPHP_ControllerBase
 		$this->tpl->assign('head', $head);
         $this->tpl->assign('file', $this->params['file']);
         
-        $file_mime = $this->GetProject()->GetObjectManager()->getFileMime($this->params['file']);
+        $file_mime = $this->GetProject()->GetObjectManager()->getFileMime($blob);
 		$isPicture = $file_mime->isImage();
         $this->tpl->assign('is_text', $file_mime->isText());
         $this->tpl->assign('is_audio', $file_mime->isAudio());
@@ -156,7 +156,7 @@ class GitPHP_Controller_Blob extends GitPHP_ControllerBase
 
 		if($isPicture){
 			return;
-		} 
+		}
 
 		if($file_mime->isText()){
 			if ($this->config->GetValue('geshi')) {
@@ -194,24 +194,6 @@ class GitPHP_Controller_Blob extends GitPHP_ControllerBase
         }
 		$this->tpl->assign('bloblines', hex_dump($blob->GetData()));
 
-	}
-
-	/**
-	 * Get valid mime strategy
-	 */
-	private function GetMimeStrategy()
-	{
-		$strategy = new GitPHP_FileMimeType_Fileinfo($this->config->GetValue('magicdb'));
-		if ($strategy->Valid())
-			return $strategy;
-
-		$strategy = new GitPHP_FileMimeType_FileExe();
-		if ($strategy->Valid())
-			return $strategy;
-
-		$strategy = new GitPHP_FileMimeType_Extension();
-		if ($strategy->Valid())
-			return $strategy;
 	}
 
 	/**

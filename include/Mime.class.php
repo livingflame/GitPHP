@@ -9,12 +9,22 @@ class GitPHP_Mime
 	protected $image_exts = array('ico', 'gif', 'jpg', 'jpeg', 'png', 'bmp');
 	protected $video_exts = array('webm', 'mp4', 'm4v', 'ogm', 'ogv', 'mov');
 	protected $audio_exts = array('wav', 'mp3', 'ogg', 'm4a');
+	protected $blob;
+	protected $mime_reader;
     
-    public function __construct($filename)
+    public function __construct($blob)
     {
-        $this->filename = basename($filename);
-		$this->ext = $this->fileExtension($this->filename);
+		if($blob instanceof GitPHP_Blob){
+			$this->blob = $blob;
+			$this->filename = basename($blob->GetName());
+			$this->ext = $this->fileExtension($this->filename);
+		} else {
+			$this->filename = basename($blob);
+			$this->ext = $this->fileExtension($this->filename);
+		}
+
     }
+
     /**
      * Returns mime type for a given extension or if no extension is provided,
      * all mime types in an associative array, with extensions as keys. 
@@ -22,7 +32,7 @@ class GitPHP_Mime
      * (extracted from Orbit source http"//orbit.luaforge.net/).
      *
      *
-     * @param string $extzzzzz
+     * @param string $ext
      * @return string, array, null
      */
     public function fileMimeType($ext = null)
@@ -1055,8 +1065,21 @@ class GitPHP_Mime
      * @return bool
      */
 	public function isImage(){
-		
-		return in_array($this->ext, $this->image_exts);
+
+		if($this->ext && in_array($this->ext, $this->image_exts)){
+			return true;
+		}
+
+		$mime = "";
+		if($this->mime_reader){
+			$mime = $this->mime_reader->GetMimeType();
+
+			if(!empty($mime)){
+				return substr($mime, 0, 6) == "image/";
+			}
+		}
+
+		return false;
 	}
     /**
      * Checks if $filename is an audio file
@@ -1064,7 +1087,20 @@ class GitPHP_Mime
      * @return bool
      */
 	public function isAudio(){
-		return in_array($this->ext, $this->audio_exts);
+		if($this->ext && in_array($this->ext, $this->audio_exts)){
+			return true;
+		}
+
+		$mime = "";
+		if($this->mime_reader){
+			$mime = $this->mime_reader->GetMimeType();
+
+			if(!empty($mime)){
+				return substr($mime, 0, 6) == "audio/";
+			}
+		}
+
+		return false;
 	}
 	
     /**
@@ -1073,7 +1109,20 @@ class GitPHP_Mime
      * @return bool
      */
 	public function isVideo(){
-		return in_array($this->ext, $this->video_exts);
+		if($this->ext && in_array($this->ext, $this->video_exts)){
+			return true;
+		}
+
+		$mime = "";
+		if($this->mime_reader){
+			$mime = $this->mime_reader->GetMimeType();
+
+			if(!empty($mime)){
+				return substr($mime, 0, 6) == "video/";
+			}
+		}
+
+		return false;
 	}
 
     
@@ -1085,12 +1134,20 @@ class GitPHP_Mime
      */
     public function isText()
     {
-        if($this->getAceModeForPath()){
+		$mime = "";
+		if($this->mime_reader){
+			$mime = $this->mime_reader->GetMimeType();
+		}elseif($this->getAceModeForPath()){
 			return true;
-		}elseif ($mime = $this->contentType($this->filename)){
+		}
+
+		if(empty($mime)){
+			$mime = $this->contentType($this->filename);
+		}
+		
+		if($mime){
 			return substr($mime, 0, 5) == "text/";
 		}
-            
         return null;
     }
     
@@ -1375,7 +1432,7 @@ class GitPHP_Mime
 			"gitignore" => array(
 				"name" => "gitignore",
 				"caption" => "Gitignore",
-				"mode" => "ace/mode/itignore",
+				"mode" => "ace/mode/gitignore",
 				"extRe" => "/^.gitignore$/i"
 			),
 			"glsl" => array(
@@ -1502,7 +1559,7 @@ class GitPHP_Mime
 				"name" => "json",
 				"caption" => "JSON",
 				"mode" => "ace/mode/json",
-				"extRe" => "/^.*\.(json)$/i"
+				"extRe" => "/^composer.lock$|^.*\.(json)$/i"
 			),
 			"jsoniq" => array(
 				"name" => "jsoniq",
@@ -1610,7 +1667,7 @@ class GitPHP_Mime
 				"name" => "markdown",
 				"caption" => "Markdown",
 				"mode" => "ace/mode/markdown",
-				"extRe" => "/^.*\.(md|markdown)$/i"
+				"extRe" => "/^license$|^readme$|^.*\.(md|markdown)$/i"
 			),
 			"mask" => array(
 				"name" => "mask",
@@ -2026,5 +2083,10 @@ class GitPHP_Mime
 		}
         return $mode;
     }
-
+	public function setMimeReader($mime_reader){
+		$this->mime_reader = $mime_reader;
+	}
+	public function getMimeReader(){
+		return $this->mime_reader;
+	}
 }

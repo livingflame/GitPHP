@@ -323,6 +323,9 @@ abstract class GitPHP_ProjectListBase implements Iterator, GitPHP_Observable_Int
 		if ($this->cache) {
 			$manager->SetCache($this->cache);
 		}
+		if($this->config){
+			$manager->SetConfig($this->config);
+		}
 		$project->SetObjectManager($manager);
 	}
 
@@ -361,6 +364,18 @@ abstract class GitPHP_ProjectListBase implements Iterator, GitPHP_Observable_Int
 			$config = new GitPHP_GitConfig($project->GetPath() . '/config');
 		} catch (Exception $e) {
 			return;
+		}
+		
+		if ($config->HasValue('remote.origin.url')) {
+			$project->SetCloneUrl($config->GetValue('remote.origin.url'));
+			$project->SetPushUrl($config->GetValue('remote.origin.url'));
+		} else {
+			if ($config->HasValue('gitphp.cloneurl')) {
+				$project->SetCloneUrl($config->GetValue('gitphp.cloneurl'));
+			}
+			if ($config->HasValue('gitphp.pushurl')) {
+				$project->SetPushUrl($config->GetValue('gitphp.pushurl'));
+			}
 		}
 
 		if ($config->HasValue('gitphp.owner')) {

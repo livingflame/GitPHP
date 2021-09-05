@@ -24,6 +24,13 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 	protected $cache = null;
 
 	/**
+	 * Config instance
+	 *
+	 * @var GitPHP_Config
+	 */
+	protected $config = null;
+
+	/**
 	 * MemoryCache instance
 	 *
 	 * @var GitPHP_MemoryCache
@@ -495,9 +502,47 @@ class GitPHP_GitObjectManager implements GitPHP_Observer_Interface
 	 * @param int $changeType type of change
 	 * @param array $args argument array
 	 */
-	public function getFileMime($file)
+	public function getFileMime($blob)
 	{
-        return new GitPHP_Mime($file);
+		$file_mime = new GitPHP_Mime($blob);
+
+        return $file_mime;
 	}
 
+	/**
+	 * Gets the config instance being used
+	 *
+	 * @return GitPHP_Config|null config instance
+	 */
+	public function GetConfig()
+	{
+		return $this->conig;
+	}
+
+	/**
+	 * Sets the memory cache instance to use
+	 *
+	 * @param GitPHP_Config|null $config config instance
+	 */
+	public function SetConfig($config)
+	{
+		$this->config = $config;
+	}
+	/**
+	 * Get valid mime strategy
+	 */
+	public function GetMimeStrategy()
+	{
+		$strategy = new GitPHP_FileMimeType_Fileinfo($this->config->GetValue('magicdb'));
+		if ($strategy->Valid())
+			return $strategy;
+
+		$strategy = new GitPHP_FileMimeType_FileExe();
+		if ($strategy->Valid())
+			return $strategy;
+
+		$strategy = new GitPHP_FileMimeType_Extension();
+		if ($strategy->Valid())
+			return $strategy;
+	}
 }

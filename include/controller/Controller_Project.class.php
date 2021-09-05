@@ -49,7 +49,7 @@ class GitPHP_Controller_Project extends GitPHP_ControllerBase
 	 */
 	protected function LoadData()
 	{
-		$project_config = $this->GetProject()->GetProjectConfig();
+
 		$head = $this->GetProject()->GetHeadCommit();
 		$this->tpl->assign('head', $head);
 		if (!$head)
@@ -129,7 +129,8 @@ class GitPHP_Controller_Project extends GitPHP_ControllerBase
 
 			$blob->SetCommit($head);
 
-			$file_mime = $this->GetProject()->GetObjectManager()->getFileMime($file);
+			$file_mime = $this->GetProject()->GetObjectManager()->getFileMime($blob);
+
 			$ace_mode_name = null;
 			$ace_mode_mode = null;
 			$ace_mode = $file_mime->getAceModeForPath();
