@@ -43,7 +43,7 @@ a:hover, a:visited, a:active {
 .page_header { 
 	height: 25px; 
 	padding: 8px; 
-	font-size: 18px; 
+	font-size: 1.5em; 
 	font-weight: bold; 
 	background-color: #d9d8d1; 
 }
@@ -59,7 +59,6 @@ a:hover, a:visited, a:active {
 .login {
 	padding-top: 2px;
 	padding-left: 8px;
-	font-size: 15px;
 	font-weight: normal;
 }
 .login a{text-decoration:none;}
@@ -174,14 +173,12 @@ display:inline-block;
  */
 table { 
 	width: 100%;
-	table-layout: fixed;
 	border-spacing: 0;
 	padding: 8px 4px; 
 }
 
 th { 
 	padding: 2px 5px; 
-	font-size: 12px; 
 	text-align: left; 
 }
 
@@ -200,15 +197,14 @@ tr.dark:hover {
 }
 
 td { 
-	padding: 2px 5px; 
-	font-size: 12px; 
+	padding: 2px 5px;
 	vertical-align: top;
 }
 
 td.link { 
 	/* navigation links on the right side of each row */
 	padding: 2px 5px;
-	width: 200px;
+	text-align:right;
 }
 td.link .snapshotTip{
 	float:none;
@@ -236,13 +232,13 @@ td.link .snapshotTip{
 	/* the rss/atom/opml/txt buttons */
 	padding: 4px; 
 	line-height: 10px;
+	font-size: 10px;
 	border: 1px solid; 
 	border-color: #fcc7a5 #7d3302 #3e1a01 #ff954e;
 	color: #ffffff; 
 	background-color: #ff6600;
 	font-weight: bold; 
-	font-family: sans-serif; 
-	font-size: 10px;
+	font-family: sans-serif;
 	text-align: center; 
 	text-decoration: none;
 }
@@ -264,8 +260,7 @@ td.link .snapshotTip{
 
 .tag {
 	/* tag badge */
-	padding: 0px 4px; 
-	font-size: 10px; 
+	padding: 0px 4px;
 	font-weight: normal;
 	background-color: #ffffaa;
 	border: 1px solid; 
@@ -274,8 +269,7 @@ td.link .snapshotTip{
 
 .head {
 	/* head badge */
-	padding: 0px 4px; 
-	font-size: 10px; 
+	padding: 0px 4px;
 	font-weight: normal;
 	background-color: #aaffaa; 
 	border: 1px solid; 
@@ -317,7 +311,6 @@ td.link .snapshotTip{
  * Search box
  */
 .search { 
-	font-size: 12px; 
 	font-weight: normal; 
 }
 
@@ -326,7 +319,6 @@ td.link .snapshotTip{
  * Language selector
  */
 .lang_select {
-	font-size: 12px;
 	font-weight: normal;
 }
 
@@ -340,8 +332,6 @@ td.link .snapshotTip{
 }
 
 .log_link {
-	/* Links by each log commit */
-	font-size: 10px; 
 	font-family: sans-serif; 
 	font-style: normal;
 }
@@ -408,8 +398,7 @@ td.link .snapshotTip{
  */
 .pre {
 	/* the entire diff output block */
-	font-family: monospace; 
-	font-size: 12px;
+	font-family: monospace;
 }
 
 .diff_info {
@@ -524,14 +513,12 @@ table.code td {
 
 table.code td.num {
 	text-align: right;
-	font-family: monospace; 
-	font-size: 12px; 
+	font-family: monospace;
 }
 
 table.code td.codeline {
 	padding-left: 5px;
-	font-family: monospace; 
-	font-size: 12px; 
+	font-family: monospace;
 }
 
 table.code tr.light:hover { 
@@ -721,7 +708,6 @@ a.no_text_decore{
   }
   
   .table--reponsive caption {
-	font-size: 1.5em;
 	margin: .5em 0 .75em;
   }
   
@@ -731,7 +717,6 @@ a.no_text_decore{
   }
   
   .table--reponsive th {
-	font-size: .85em;
 	letter-spacing: .1em;
 	text-transform: uppercase;
   }
@@ -739,10 +724,6 @@ a.no_text_decore{
   @media screen and (max-width: 768px) {
 	.table--reponsive {
 	  border: 0;
-	}
-  
-	.table--reponsive caption {
-	  font-size: 1.3em;
 	}
 	
 	.table--reponsive thead {
